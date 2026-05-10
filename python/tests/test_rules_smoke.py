@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import yaml
 
-from pragmatiks_lint import run_check
+from pragmatiks_lint import list_rules, run_check
+from pragmatiks_lint._rules import bundled_rules_directory
 
 
 RuleCase = tuple[str, str]
@@ -38,3 +40,14 @@ def test_srp_js_boundaries_ignore_words() -> None:
     fixture_path = Path(__file__).parent / "fixtures" / "srp_js_non_violation.js"
     findings = run_check([fixture_path], language="ts")
     assert not any(finding.rule_id.endswith("pra-srp-and-or-name-js") for finding in findings)
+
+
+def test_list_rules_matches_yaml_rule_ids() -> None:
+    """Verify the public rule list mirrors bundled YAML rule IDs."""
+    expected_rule_ids: set[str] = set()
+    with bundled_rules_directory() as rules_directory:
+        for rule_file in rules_directory.glob("*.yml"):
+            payload = yaml.safe_load(rule_file.read_text())
+            expected_rule_ids.update(rule["id"] for rule in payload["rules"])
+
+    assert set(list_rules()) == expected_rule_ids

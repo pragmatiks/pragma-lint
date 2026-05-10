@@ -6,6 +6,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import resources
 from pathlib import Path
+from typing import Any, cast
+
+import yaml
 
 
 @contextmanager
@@ -19,9 +22,27 @@ def bundled_rules_directory() -> Iterator[Path]:
 def list_rules() -> list[str]:
     """Return bundled semgrep rule identifiers."""
     rules_reference = resources.files("pragmatiks_lint").joinpath("semgrep_rules")
-    return sorted(parse_rule_identifier(path.name) for path in rules_reference.iterdir() if path.name.endswith(".yml"))
+    rule_ids: list[str] = []
+    rule_files = sorted(
+        (path for path in rules_reference.iterdir() if path.name.endswith(".yml")), key=lambda path: path.name
+    )
+    for rule_file in rule_files:
+        rule_ids.extend(parse_rule_ids(rule_file.read_text()))
+    return sorted(rule_ids)
 
 
-def parse_rule_identifier(file_name: str) -> str:
-    """Return a semgrep rule identifier derived from a rule file name."""
-    return file_name.removesuffix(".yml").replace("_", "-")
+def parse_rule_ids(rule_text: str) -> list[str]:
+    """Return semgrep rule identifiers parsed from YAML text."""
+    payload = cast(dict[str, Any] | None, yaml.safe_load(rule_text))
+    if not payload:
+        return []
+
+    rules = payload.get("rules", [])
+    if not isinstance(rules, list):
+        return []
+
+    rule_ids: list[str] = []
+    for rule in rules:
+        if isinstance(rule, dict) and isinstance(rule.get("id"), str):
+            rule_ids.append(rule["id"])
+    return rule_ids

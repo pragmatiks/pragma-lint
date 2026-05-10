@@ -5,6 +5,7 @@ description = "Library API and bundled semgrep rules for Pragmatiks engineering 
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "PyYAML>=6.0.0",
     "semgrep>=1.145.0",
 ]
 classifiers = [
@@ -19,6 +20,7 @@ dev = [
     "mypy>=1.18.0",
     "pytest>=9.0.0",
     "ruff>=0.14.0",
+    "types-PyYAML>=6.0.0",
 ]
 
 [tool.ruff]
@@ -65,6 +67,8 @@ include = ["src/pragmatiks_lint/semgrep_rules/*.yml"]
 
 [tool.hatch.build.targets.sdist]
 include = [
+    "CHANGELOG.md",
+    "LICENSE",
     "src/pragmatiks_lint",
     "README.md",
     "pyproject.toml",
