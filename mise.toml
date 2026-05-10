@@ -2,3 +2,4 @@
 python = "3.13"
 node = "24"
 pnpm = "10"
+task = "3.49.1"
