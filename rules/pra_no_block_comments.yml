@@ -1,0 +1,11 @@
+rules:
+  - id: pra-no-block-comments-python
+    pattern-regex: '(?m)^[ \t]*#(?![ \t]*WHY:).*\n[ \t]*#(?![ \t]*WHY:).*$'
+    message: "principle #10 Block comments make code harder to trust. Delete the comment or replace it with one WHY line."
+    severity: ERROR
+    languages: [python]
+  - id: pra-no-block-comments-js
+    pattern-regex: '/\*(?!\*)[\s\S]*?\*/'
+    message: "principle #10 Block comments make code harder to trust. Delete the comment or replace it with one WHY line."
+    severity: ERROR
+    languages: [typescript, javascript]

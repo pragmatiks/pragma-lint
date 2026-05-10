@@ -1,0 +1,42 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install Python dependencies
+    cmd: uv sync --all-groups
+
+  vendor-rules:
+    desc: Vendor shared semgrep rules into the Python package
+    cmds:
+      - mkdir -p src/pragmatiks_lint/semgrep_rules
+      - cp ../rules/*.yml src/pragmatiks_lint/semgrep_rules/
+
+  format:
+    desc: Format Python code with ruff
+    cmds:
+      - uv run ruff format .
+      - uv run ruff check --fix .
+
+  check:
+    desc: Check Python code with ruff and mypy
+    deps:
+      - vendor-rules
+    cmds:
+      - uv run ruff check .
+      - uv run mypy
+
+  test:
+    desc: Run Python semgrep smoke tests
+    deps:
+      - vendor-rules
+    cmd: uv run pytest
+
+  build:
+    desc: Build wheel and sdist
+    deps:
+      - vendor-rules
+    cmd: uv build
+
+  publish:
+    desc: Publish package to PyPI
+    cmd: uv publish

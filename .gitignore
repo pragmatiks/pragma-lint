@@ -1,0 +1,14 @@
+.DS_Store
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.venv/
+__pycache__/
+*.py[cod]
+python/dist/
+python/build/
+python/src/pragmatiks_lint/semgrep_rules/
+js/node_modules/
+js/dist/
+js/src/semgrep-rules/
+js/*.tgz

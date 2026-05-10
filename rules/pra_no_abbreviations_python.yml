@@ -1,0 +1,21 @@
+rules:
+  - id: pra-no-abbreviations-python
+    patterns:
+      - pattern-either:
+          - pattern: $NAME = $VALUE
+          - pattern: "def $NAME(...): ..."
+          - pattern: "async def $NAME(...): ..."
+          - pattern: "def $FUNC($NAME, ...): ..."
+          - pattern: "def $FUNC(..., $NAME, ...): ..."
+          - pattern: "async def $FUNC($NAME, ...): ..."
+          - pattern: "async def $FUNC(..., $NAME, ...): ..."
+          - pattern: "for $NAME in $ITERABLE: ..."
+          - pattern: "class $NAME(...): ..."
+          - pattern: "class $NAME: ..."
+          - pattern: self.$NAME = $VALUE
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '^(k8s|cfg|db|req|res|ctx|tmp|pkg|svc|mgr|repo|usr|pwd|idx|cnt|msg|err|btn|txt|num|val)$'
+    message: "principle #11 Abbreviated identifier hides meaning. Rename it with full words."
+    severity: WARNING
+    languages: [python]

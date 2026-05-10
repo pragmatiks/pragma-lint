@@ -1,0 +1,38 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install JS dependencies
+    cmd: pnpm install
+
+  vendor-rules:
+    desc: Vendor shared semgrep rules into the npm package
+    cmds:
+      - mkdir -p src/semgrep-rules
+      - cp ../rules/*.yml src/semgrep-rules/
+
+  format:
+    desc: Format TypeScript code
+    cmd: pnpm format
+
+  check:
+    desc: Lint and type check
+    deps:
+      - vendor-rules
+    cmd: pnpm check
+
+  test:
+    desc: Run JS tests
+    deps:
+      - vendor-rules
+    cmd: pnpm test
+
+  build:
+    desc: Build distribution
+    deps:
+      - vendor-rules
+    cmd: pnpm build
+
+  publish:
+    desc: Publish to npm registry
+    cmd: pnpm publish --access public

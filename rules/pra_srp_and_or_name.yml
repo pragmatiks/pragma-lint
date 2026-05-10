@@ -1,0 +1,24 @@
+rules:
+  - id: pra-srp-and-or-name
+    patterns:
+      - pattern-either:
+          - pattern: "def $NAME(...): ..."
+          - pattern: "async def $NAME(...): ..."
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '.*(_and_|_or_|[a-z0-9](And|Or)(?=[A-Z]|$)).*'
+    message: "principle #12 Compound function name violates SRP. Split the function by responsibility."
+    severity: ERROR
+    languages: [python]
+  - id: pra-srp-and-or-name-js
+    patterns:
+      - pattern-either:
+          - pattern: "function $NAME(...) { ... }"
+          - pattern: "async function $NAME(...) { ... }"
+          - pattern: "const $NAME = (...) => ..."
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '.*(_and_|_or_|[a-z0-9](And|Or)(?=[A-Z]|$)).*'
+    message: "principle #12 Compound function name violates SRP. Split the function by responsibility."
+    severity: ERROR
+    languages: [typescript, javascript]

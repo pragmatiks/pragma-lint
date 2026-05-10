@@ -1,0 +1,43 @@
+version: "3"
+
+includes:
+  python:
+    taskfile: ./python/Taskfile.yaml
+    dir: ./python
+  js:
+    taskfile: ./js/Taskfile.yaml
+    dir: ./js
+
+tasks:
+  default:
+    cmd: task --list-all
+
+  all:install:
+    desc: Install Python and JS dependencies
+    deps:
+      - python:install
+      - js:install
+
+  all:format:
+    desc: Format Python and JS packages
+    deps:
+      - python:format
+      - js:format
+
+  all:check:
+    desc: Run Python and JS checks
+    deps:
+      - python:check
+      - js:check
+
+  all:test:
+    desc: Run Python and JS tests
+    deps:
+      - python:test
+      - js:test
+
+  all:build:
+    desc: Build Python and JS package artifacts
+    deps:
+      - python:build
+      - js:build

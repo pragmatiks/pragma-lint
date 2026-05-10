@@ -1,0 +1,27 @@
+rules:
+  - id: pra-env-read-deep
+    pattern-either:
+      - pattern: os.environ[$KEY]
+      - pattern: os.environ.get($KEY)
+      - pattern: os.getenv($KEY)
+    paths:
+      exclude:
+        - "settings.py"
+        - "config.py"
+        - "env.py"
+        - "__main__.py"
+        - "__init__.py"
+        - "app.py"
+        - "cli.py"
+        - "main.py"
+        - "*/settings.py"
+        - "*/config.py"
+        - "*/env.py"
+        - "*/__main__.py"
+        - "*/__init__.py"
+        - "*/app.py"
+        - "*/cli.py"
+        - "*/main.py"
+    message: "principle #8 Environment reads belong at app boundaries. Move the read to settings or config."
+    severity: WARNING
+    languages: [python]

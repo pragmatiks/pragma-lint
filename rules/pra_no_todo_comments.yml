@@ -1,0 +1,11 @@
+rules:
+  - id: pra-no-todo-comments-python
+    pattern-regex: '(?i)#\s*(TODO(?!\(PRA-[0-9]+\))|FIXME|XXX)\b'
+    message: "principle #10 Planning comments decay. Link a Linear issue or remove the comment."
+    severity: ERROR
+    languages: [python]
+  - id: pra-no-todo-comments-js
+    pattern-regex: '(?i)(//|/\*)\s*(TODO(?!\(PRA-[0-9]+\))|FIXME|XXX)\b'
+    message: "principle #10 Planning comments decay. Link a Linear issue or remove the comment."
+    severity: ERROR
+    languages: [typescript, javascript]

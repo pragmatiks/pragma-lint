@@ -1,0 +1,44 @@
+rules:
+  - id: pra-io-prefix-mismatch
+    patterns:
+      - pattern-either:
+          - pattern: |
+              def $NAME(...):
+                  ...
+          - pattern: |
+              async def $NAME(...):
+                  ...
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '^(get|fetch|retrieve|load|save|read|write|query)_.*'
+      - pattern-not: |
+          def $NAME(...):
+              ...
+              await $CALL
+              ...
+      - pattern-not: |
+          async def $NAME(...):
+              ...
+              await $CALL
+              ...
+      - pattern-not: |
+          def $NAME(...):
+              ...
+              open(...)
+              ...
+      - pattern-not: |
+          def $NAME(...):
+              ...
+              httpx.$METHOD(...)
+              ...
+      - pattern-not: |
+          def $NAME(...):
+              ...
+              requests.$METHOD(...)
+              ...
+      - pattern-not-regex: '(?s)(database|session|connection|cursor|client)\.(execute|fetch|get|post|put|delete|query|read|write|save)\('
+    message: "principle #7 I/O-prefixed function appears pure. Rename it with compute, build, derive, format, or parse."
+    severity: WARNING
+    languages: [python]
+    metadata:
+      note: "Heuristic rule; false positives are expected for hidden I/O wrappers."

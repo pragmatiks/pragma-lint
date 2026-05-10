@@ -1,0 +1,75 @@
+[project]
+name = "pragmatiks-lint"
+version = "0.1.0"
+description = "Library API and bundled semgrep rules for Pragmatiks engineering principles"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "semgrep>=1.145.0",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.0",
+    "pytest>=9.0.0",
+    "ruff>=0.14.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "PLC0415",
+    "UP",
+    "D",
+    "DOC",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["pragmatiks_lint"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/fixtures/*.py" = ["D100", "D103"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["src/pragmatiks_lint", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pragmatiks_lint"]
+include = ["src/pragmatiks_lint/semgrep_rules/*.yml"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/pragmatiks_lint",
+    "README.md",
+    "pyproject.toml",
+]
+
+[build-system]
+requires = ["hatchling>=1.28.0"]
+build-backend = "hatchling.build"
