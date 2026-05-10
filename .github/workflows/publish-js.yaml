@@ -1,0 +1,86 @@
+name: Publish JS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "js/**"
+      - "rules/**"
+      - ".github/workflows/publish-js.yaml"
+  workflow_dispatch:
+
+jobs:
+  bump-and-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      bumped: ${{ steps.bump.outputs.bumped }}
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.x"
+      - run: uv python install 3.13
+      - run: uv tool install commitizen
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Bump version
+        id: bump
+        working-directory: js
+        run: |
+          cz bump --yes --changelog 2>&1 | tee bump_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          if grep -qE "No commits found|No new commits found|is not a bump|NO_COMMITS_TO_BUMP|NO_COMMITS_FOUND" bump_output.txt; then
+            echo "bumped=false" >> $GITHUB_OUTPUT
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "bumped=true" >> $GITHUB_OUTPUT
+            NEW_VERSION=$(cz version --project)
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          else
+            cat bump_output.txt
+            exit 1
+          fi
+      - name: Push tag back
+        if: steps.bump.outputs.bumped == 'true'
+        run: |
+          git pull --rebase origin main
+          git push origin main --tags
+
+  release-npm:
+    needs: bump-and-tag
+    if: needs.bump-and-tag.outputs.bumped == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: js-v${{ needs.bump-and-tag.outputs.version }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org/"
+      - uses: arduino/setup-task@v2
+      - name: Build
+        working-directory: js
+        run: |
+          pnpm install --frozen-lockfile
+          task build
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: js-v${{ needs.bump-and-tag.outputs.version }}
+          name: "@pragmatiks/lint v${{ needs.bump-and-tag.outputs.version }}"
+          generate_release_notes: true
+      - name: Publish to npm
+        working-directory: js
+        run: pnpm publish --access public --provenance --no-git-checks

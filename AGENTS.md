@@ -2,7 +2,7 @@
 
 ## Project
 
-**pragma-lint**: unified mono-repo for Pragmatiks lint libraries.
+**pragma-lint**: mono-repo for Pragmatiks lint libraries with independent package versions.
 
 ## Architecture
 
@@ -12,6 +12,8 @@ pragma-lint/
 ├── python/     # pragmatiks-lint Python library package
 └── js/         # @pragmatiks/lint npm library package
 ```
+
+Python and JS publish independently through separate workflows. Shared `rules/` changes are consumed by both packages and trigger both release paths.
 
 ## Constraints
 
@@ -45,15 +47,24 @@ Keep both packages library-only. CLI dependencies belong in `pragma-cli`, not he
 
 ## Secrets
 
-Do not commit secrets, `.npmrc` or `.pypirc` files with tokens, MCP auth files, or local machine credentials. Publishing tokens such as `PYPI_TOKEN` must stay in the caller environment.
+Do not commit secrets, `.npmrc` or `.pypirc` files with tokens, MCP auth files, or local machine credentials. Publishing uses OIDC trusted publishers, not repository package tokens.
 
 ## Linear Workflow
 
 Reference PRA-XXX ticket IDs in implementation notes and callbacks. Use conventional commits for repository history.
 
+## Commit Messages
+
+Use package scopes so path-filtered publish workflows bump only the intended package:
+
+- `feat(python): ...` / `fix(python): ...` bumps the Python package.
+- `feat(js): ...` / `fix(js): ...` bumps the JS package.
+- `feat(rules): ...` / `fix(rules): ...` bumps both packages.
+- `chore(ci): ...` and other non-package maintenance commits do not publish when path filters exclude package and rule paths.
+
 ## Publishing
 
-Publish only with explicit authorization. Python uses `task python:publish` (`uv publish`, requires `PYPI_TOKEN`). npm publishing runs `pnpm publish --access public` from `js/`. Create tag `v{version}` after successful package publication.
+Publish only with explicit authorization. Python publishes through `.github/workflows/publish-python.yaml` with tags named `python-v{version}`. JS publishes through `.github/workflows/publish-js.yaml` with tags named `js-v{version}`. Both workflows use OIDC trusted publishers and package-local Commitizen config. Do not create shared `v{version}` tags.
 
 ## Engineering Principles
 # Pragmatiks Engineering Principles

@@ -61,6 +61,14 @@ files = ["src/pragmatiks_lint", "tests"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+version_files = ["pyproject.toml:^version"]
+tag_format = "python-v$version"
+update_changelog_on_bump = true
+changelog_file = "CHANGELOG.md"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/pragmatiks_lint"]
 include = ["src/pragmatiks_lint/semgrep_rules/*.yml"]
