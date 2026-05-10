@@ -1,7 +1,18 @@
 [tool.commitizen]
-name = "cz_conventional_commits"
+name = "cz_customize"
 version = "0.1.0"
-version_files = ["package.json:\"version\""]
 tag_format = "js-v$version"
+ignored_tag_formats = ["python-v$version", "v$version"]
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
+version_files = ["package.json:\"version\""]
+
+[tool.commitizen.customize]
+bump_pattern = "^(feat|fix|perf|refactor|BREAKING CHANGE)\\((js|rules)\\)"
+bump_map = { "BREAKING CHANGE" = "MAJOR", "feat" = "MINOR", "fix" = "PATCH", "perf" = "PATCH", "refactor" = "PATCH" }
+bump_map_major_version_zero = { "BREAKING CHANGE" = "MINOR", "feat" = "MINOR", "fix" = "PATCH", "perf" = "PATCH", "refactor" = "PATCH" }
+schema = "<type>(<scope>): <subject>"
+schema_pattern = "^(build|chore|ci|docs|feat|fix|perf|refactor|style|test)(\\([^()]+\\))?(!)?: .+"
+commit_parser = "^(?P<change_type>feat|fix|perf|refactor)\\((?P<scope>js|rules)\\)(?P<breaking>!)?: (?P<message>.+)$"
+changelog_pattern = "^(feat|fix|perf|refactor)\\((js|rules)\\)(!)?:"
+change_type_map = { "feat" = "Features", "fix" = "Bug Fixes", "perf" = "Performance", "refactor" = "Refactor" }

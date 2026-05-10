@@ -1,5 +1,9 @@
 name: Publish Python
 
+concurrency:
+  group: pragma-lint-publish
+  cancel-in-progress: false
+
 on:
   push:
     branches: [main]
@@ -33,19 +37,19 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       - name: Bump version
         id: bump
-        working-directory: python
         run: |
-          cz bump --yes --changelog 2>&1 | tee bump_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
-          if grep -qE "No commits found|No new commits found|is not a bump|NO_COMMITS_TO_BUMP|NO_COMMITS_FOUND" bump_output.txt; then
+          set +e
+          cz --config python/pyproject.toml bump --yes --changelog
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 21 ]; then
             echo "bumped=false" >> $GITHUB_OUTPUT
           elif [ $EXIT_CODE -eq 0 ]; then
             echo "bumped=true" >> $GITHUB_OUTPUT
-            NEW_VERSION=$(cz version --project)
+            NEW_VERSION=$(cz --config python/pyproject.toml version --project)
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           else
-            cat bump_output.txt
-            exit 1
+            exit $EXIT_CODE
           fi
       - name: Push tag back
         if: steps.bump.outputs.bumped == 'true'
@@ -75,6 +79,10 @@ jobs:
         run: |
           uv sync --frozen
           task build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist/
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -84,7 +92,3 @@ jobs:
             python/dist/*.tar.gz
             python/dist/*.whl
           generate_release_notes: true
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: python/dist/

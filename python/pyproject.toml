@@ -62,12 +62,23 @@ files = ["src/pragmatiks_lint", "tests"]
 testpaths = ["tests"]
 
 [tool.commitizen]
-name = "cz_conventional_commits"
+name = "cz_customize"
 version = "0.2.0"
-version_files = ["pyproject.toml:^version"]
 tag_format = "python-v$version"
+ignored_tag_formats = ["js-v$version", "v$version"]
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
+version_files = ["pyproject.toml:^version"]
+
+[tool.commitizen.customize]
+bump_pattern = "^(feat|fix|perf|refactor|BREAKING CHANGE)\\((python|rules)\\)"
+bump_map = { "BREAKING CHANGE" = "MAJOR", "feat" = "MINOR", "fix" = "PATCH", "perf" = "PATCH", "refactor" = "PATCH" }
+bump_map_major_version_zero = { "BREAKING CHANGE" = "MINOR", "feat" = "MINOR", "fix" = "PATCH", "perf" = "PATCH", "refactor" = "PATCH" }
+schema = "<type>(<scope>): <subject>"
+schema_pattern = "^(build|chore|ci|docs|feat|fix|perf|refactor|style|test)(\\([^()]+\\))?(!)?: .+"
+commit_parser = "^(?P<change_type>feat|fix|perf|refactor)\\((?P<scope>python|rules)\\)(?P<breaking>!)?: (?P<message>.+)$"
+changelog_pattern = "^(feat|fix|perf|refactor)\\((python|rules)\\)(!)?:"
+change_type_map = { "feat" = "Features", "fix" = "Bug Fixes", "perf" = "Performance", "refactor" = "Refactor" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pragmatiks_lint"]
