@@ -7,3 +7,13 @@
 - Added library-only Python package `pragmatiks-lint`.
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
+
+## python-v0.2.0 (2026-05-10)
+
+### Feat
+
+- initial scaffold of pragma-lint v0.1.0 — unified mono-repo (PRA-418)
+
+### Fix
+
+- address PRA-418 review feedback
