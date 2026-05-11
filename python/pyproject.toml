@@ -1,6 +1,6 @@
 [project]
 name = "pragmatiks-lint"
-version = "0.2.0"
+version = "0.3.1"
 description = "Library API and bundled semgrep rules for Pragmatiks engineering principles"
 readme = "README.md"
 requires-python = ">=3.13"
