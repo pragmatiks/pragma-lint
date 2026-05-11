@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.3.0 (2026-05-11)
+
+### Features
+
+- **python**: add Typer CLI plugin module + pragma.commands entry point
+
 ## python-v0.2.0 (2026-05-10)
 
 ### Feat

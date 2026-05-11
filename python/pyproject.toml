@@ -68,7 +68,7 @@ testpaths = ["tests"]
 
 [tool.commitizen]
 name = "cz_customize"
-version = "0.2.0"
+version = "0.3.0"
 tag_format = "python-v$version"
 ignored_tag_formats = ["js-v$version", "v$version"]
 update_changelog_on_bump = true
