@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.3.1 (2026-05-11)
+
+### Bug Fixes
+
+- **python**: correct cz invocation in publish workflows
+
 ## python-v0.3.0 (2026-05-11)
 
 ### Features
