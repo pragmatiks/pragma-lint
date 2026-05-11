@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "PyYAML>=6.0.0",
+    "rich>=13.9.0",
     "semgrep>=1.145.0",
+    "typer>=0.15.3",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -22,6 +24,9 @@ dev = [
     "ruff>=0.14.0",
     "types-PyYAML>=6.0.0",
 ]
+
+[project.entry-points."pragma.commands"]
+lint = "pragmatiks_lint.cli:app"
 
 [tool.ruff]
 target-version = "py313"
