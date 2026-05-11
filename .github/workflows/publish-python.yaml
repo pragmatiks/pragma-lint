@@ -37,16 +37,17 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       - name: Bump version
         id: bump
+        working-directory: python
         run: |
           set +e
-          cz --config python/pyproject.toml bump --yes --changelog
+          cz bump --yes --changelog
           EXIT_CODE=$?
           set -e
           if [ $EXIT_CODE -eq 21 ]; then
             echo "bumped=false" >> $GITHUB_OUTPUT
           elif [ $EXIT_CODE -eq 0 ]; then
             echo "bumped=true" >> $GITHUB_OUTPUT
-            NEW_VERSION=$(cz --config python/pyproject.toml version --project)
+            NEW_VERSION=$(cz version --project)
             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           else
             exit $EXIT_CODE
