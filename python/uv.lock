@@ -760,7 +760,7 @@ wheels = [
 
 [[package]]
 name = "pragmatiks-lint"
-version = "0.2.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
