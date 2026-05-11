@@ -43,7 +43,7 @@ jobs:
           cz bump --yes --changelog
           EXIT_CODE=$?
           set -e
-          if [ $EXIT_CODE -eq 21 ]; then
+          if [ $EXIT_CODE -eq 21 ] || [ $EXIT_CODE -eq 3 ]; then
             echo "bumped=false" >> $GITHUB_OUTPUT
           elif [ $EXIT_CODE -eq 0 ]; then
             echo "bumped=true" >> $GITHUB_OUTPUT
