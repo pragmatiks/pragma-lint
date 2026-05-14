@@ -1,0 +1,28 @@
+# Build artifacts
+node_modules/
+.venv/
+dist/
+build/
+target/
+.next/
+
+# Python caches
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Coverage / test artifacts
+.coverage
+coverage/
+htmlcov/
+
+# Worktrees and graph output (prevent recursion / duplication)
+.claude/worktrees/
+graphify-out/
+
+# pragma-lint specific build outputs
+python/dist/
+js/dist/
+js/node_modules/
+js/.tsbuildinfo
