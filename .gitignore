@@ -12,3 +12,6 @@ js/node_modules/
 js/dist/
 js/src/semgrep-rules/
 js/*.tgz
+
+# graphify
+graphify-out/
