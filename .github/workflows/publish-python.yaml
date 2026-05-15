@@ -60,6 +60,7 @@ jobs:
           if ! git diff --quiet uv.lock; then
             git add uv.lock
             git commit --amend --no-edit
+            git tag -f "python-v${{ steps.bump.outputs.version }}" HEAD
           fi
       - name: Push tag back
         if: steps.bump.outputs.bumped == 'true'
