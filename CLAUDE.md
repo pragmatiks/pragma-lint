@@ -66,6 +66,10 @@ Use package scopes so path-filtered publish workflows bump only the intended pac
 
 Publish only with explicit authorization. Python publishes through `.github/workflows/publish-python.yaml` with tags named `python-v{version}`. JS publishes through `.github/workflows/publish-js.yaml` with tags named `js-v{version}`. Both workflows use OIDC trusted publishers and package-local Commitizen config. Do not create shared `v{version}` tags.
 
+`cz bump` must be invoked from inside the package directory (`python/` or `js/`); never pass `--config <path>` from the repo root. `version_files` resolves against the current working directory, and the `--config` form silently fails to update `[project].version` (root cause of the failed 0.3.0 publish, recovered via 0.3.1 fix-forward).
+
+Re-pointing an already-pushed tag requires explicit supervisor authorization. Default recovery for a wedged publish is fix-forward to the next patch version (e.g. 0.3.1 → 0.3.2), not force-moving the existing tag.
+
 ## Engineering Principles
 # Pragmatiks Engineering Principles
 
