@@ -52,6 +52,15 @@ jobs:
           else
             exit $EXIT_CODE
           fi
+      - name: Refresh lockfile self-entry
+        if: steps.bump.outputs.bumped == 'true'
+        working-directory: python
+        run: |
+          uv lock
+          if ! git diff --quiet uv.lock; then
+            git add uv.lock
+            git commit --amend --no-edit
+          fi
       - name: Push tag back
         if: steps.bump.outputs.bumped == 'true'
         run: |
