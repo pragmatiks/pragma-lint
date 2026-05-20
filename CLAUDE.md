@@ -79,7 +79,7 @@ Canonical engineering rules for all Pragmatiks code. Workers (developers and rev
 
 Applies to all code in this repository.
 
-Some principles only apply to one language or stack — flagged where relevant. Drift between workspace-root `../PRINCIPLES.md` and this repo's `AGENTS.md` / `CLAUDE.md` § Engineering Principles must be fixed in the canonical file first, then synced.
+Some principles only apply to one language or stack — flagged where relevant. Drift between workspace-root `../PRINCIPLES.md` and this repo's `CLAUDE.md` § Engineering Principles must be fixed in the canonical file first, then synced.
 
 ## Enforcement layers
 
@@ -250,7 +250,7 @@ Every developer dispatch must:
 Workspace-root `../PRINCIPLES.md` is the canonical source. To change a principle:
 
 1. Edit `../PRINCIPLES.md` first.
-2. Update each repo's `AGENTS.md` § Engineering Principles + `CLAUDE.md` § Engineering Principles to match.
+2. Update each repo's `CLAUDE.md` § Engineering Principles to match.
 3. Update `pragmatiks-lint` / `@pragmatiks/lint` rule versions and publish.
 4. Bump consumers (lockfile bumps cascade like SDK changes).
 
