@@ -42,6 +42,26 @@ def test_srp_js_boundaries_ignore_words() -> None:
     assert not any(finding.rule_id.endswith("pra-srp-and-or-name-js") for finding in findings)
 
 
+IO_PREFIX_NON_VIOLATION_FIXTURES: tuple[str, ...] = (
+    "io_prefix_pathlib_non_violation.py",
+    "io_prefix_subprocess_non_violation.py",
+)
+
+
+@pytest.mark.parametrize("fixture_name", IO_PREFIX_NON_VIOLATION_FIXTURES)
+def test_io_prefix_recognizes_hidden_io(fixture_name: str) -> None:
+    """Verify pathlib, subprocess, and shutil idioms are recognized as I/O."""
+    fixture_path = Path(__file__).parent / "fixtures" / fixture_name
+    findings = run_check([fixture_path], language="python")
+    io_prefix_findings = [
+        finding
+        for finding in findings
+        if finding.rule_id == "pra-io-prefix-mismatch"
+        or finding.rule_id.endswith(".pra-io-prefix-mismatch")
+    ]
+    assert io_prefix_findings == []
+
+
 def test_list_rules_matches_yaml_rule_ids() -> None:
     """Verify the public rule list mirrors bundled YAML rule IDs."""
     expected_rule_ids: set[str] = set()
