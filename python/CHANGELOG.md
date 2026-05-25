@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.4.0 (2026-05-25)
+
+### Features
+
+- **rules**: recognize pathlib + subprocess + shutil I/O in pra-io-prefix-mismatch (#4)
+
 ## python-v0.3.1 (2026-05-11)
 
 ### Bug Fixes
