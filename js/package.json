@@ -1,6 +1,6 @@
 {
   "name": "@pragmatiks/lint",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Pragmatiks engineering principles eslint config and bundled semgrep rules.",
   "type": "module",
   "main": "./dist/index.js",

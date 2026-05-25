@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.3.2 (2026-05-25)
+
+### Bug Fixes
+
+- **js**: add OIDC subject debug step to publish workflow
+
 ## js-v0.3.1 (2026-05-25)
 
 ### Bug Fixes
