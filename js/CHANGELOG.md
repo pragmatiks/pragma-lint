@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.3.4 (2026-05-25)
+
+### Bug Fixes
+
+- **js**: upgrade npm in CI to enable OIDC trusted publishers
+
 ## js-v0.3.3 (2026-05-25)
 
 ### Bug Fixes
