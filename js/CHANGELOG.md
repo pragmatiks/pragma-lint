@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.3.3 (2026-05-25)
+
+### Bug Fixes
+
+- **js**: remove registry-url from setup-node so npm uses OIDC
+
 ## js-v0.3.2 (2026-05-25)
 
 ### Bug Fixes
