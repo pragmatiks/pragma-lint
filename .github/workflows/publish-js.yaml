@@ -85,6 +85,22 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           task build
+      - name: Debug OIDC subject for npm audience
+        run: |
+          TOKEN_RESPONSE=$(curl -sS \
+            -H "User-Agent: actions/oidc-client" \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org")
+          TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.value // empty')
+          if [ -z "$TOKEN" ]; then
+            echo "Failed to retrieve OIDC token. Response:"
+            echo "$TOKEN_RESPONSE"
+            exit 0
+          fi
+          echo "=== OIDC claims sent to npm ==="
+          echo "$TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | \
+            jq -r '{sub, aud, iss, environment, repository, repository_owner, workflow, workflow_ref, job_workflow_ref, ref, ref_type, runner_environment} | to_entries | map("  \(.key): \(.value // "<absent>")") | .[]' || \
+            echo "Failed to decode token claims"
       - name: Publish to npm
         working-directory: js
         run: npm publish --access public --provenance
