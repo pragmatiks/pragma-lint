@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.3.0 (2026-05-25)
+
+### Features
+
+- **rules**: recognize pathlib + subprocess + shutil I/O in pra-io-prefix-mismatch (#4)
+
 ## js-v0.2.0 (2026-05-10)
 
 ### Misc
