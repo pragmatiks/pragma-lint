@@ -43,5 +43,5 @@ def remove_empty_directory(directory_path: Path) -> None:
     directory_path.rmdir()
 
 
-async def aread_state_file(state_path: Path) -> str:
+async def read_async_state_file(state_path: Path) -> str:
     return state_path.read_text()
