@@ -39,7 +39,7 @@ Use Taskfile commands:
 
 ## Testing
 
-Run `task python:test` for Python semgrep smoke coverage and `task js:test` for eslint config integration coverage. Expected counts are Python 11 tests and JS 9 tests. This repository has no e2e suite.
+Run `task python:test` for Python semgrep smoke coverage and `task js:test` for eslint config integration coverage. This repository has no e2e suite.
 
 ## Dependency Policy
 
