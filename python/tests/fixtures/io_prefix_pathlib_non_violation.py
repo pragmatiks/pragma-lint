@@ -21,25 +21,27 @@ def get_state_files(state_directory: Path) -> list[Path]:
     return [entry for entry in state_directory.iterdir() if entry.is_file()]
 
 
-def delete_pid_file(pid_path: Path) -> None:
+def save_pid_cleanup(pid_path: Path) -> None:
     pid_path.unlink()
 
 
-def create_state_directory(state_directory: Path) -> None:
+def write_state_directory_init(state_directory: Path) -> None:
     state_directory.mkdir(parents=True, exist_ok=True)
 
 
 def read_marker_file(marker_path: Path) -> str:
-    if marker_path.exists():
-        return marker_path.read_text()
-    return ""
+    return marker_path.read_text()
 
 
-def find_log_files(log_directory: Path) -> list[Path]:
+def query_marker_present(marker_path: Path) -> bool:
+    return marker_path.exists()
+
+
+def load_log_files(log_directory: Path) -> list[Path]:
     return list(log_directory.glob("*.log"))
 
 
-def remove_empty_directory(directory_path: Path) -> None:
+def save_empty_directory_pruned(directory_path: Path) -> None:
     directory_path.rmdir()
 
 
