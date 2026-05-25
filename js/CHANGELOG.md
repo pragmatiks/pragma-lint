@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.3.1 (2026-05-25)
+
+### Bug Fixes
+
+- **js**: use npm publish for OIDC compatibility
+
 ## js-v0.3.0 (2026-05-25)
 
 ### Features
