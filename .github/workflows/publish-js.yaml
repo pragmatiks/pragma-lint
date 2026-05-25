@@ -84,6 +84,8 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           task build
+      - name: Upgrade npm to support trusted publishers
+        run: npm install -g npm@latest
       - name: Publish to npm
         working-directory: js
         run: npm publish --access public --provenance
