@@ -17,6 +17,7 @@ RULE_CASES: tuple[RuleCase, ...] = (
     ("pra-srp-and-or-name", "srp_violation.py"),
     ("pra-srp-and-or-name-js", "srp_js_violation.js"),
     ("pra-no-abbreviations-python", "abbreviation_violation.py"),
+    ("pra-no-abbreviations-python", "abbreviation_db_compound_violation.py"),
     ("pra-no-block-comments-python", "block_comment_violation.py"),
     ("pra-no-block-comments-js", "block_comment_violation.js"),
     ("pra-no-todo-comments-python", "todo_violation.py"),

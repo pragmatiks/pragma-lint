@@ -15,7 +15,7 @@ rules:
           - pattern: self.$NAME = $VALUE
       - metavariable-regex:
           metavariable: $NAME
-          regex: '^(k8s|cfg|db|req|res|ctx|tmp|pkg|svc|mgr|repo|usr|pwd|idx|cnt|msg|err|btn|txt|num|val)$'
+          regex: '^(k8s|cfg|req|res|ctx|tmp|pkg|svc|mgr|repo|usr|pwd|idx|cnt|msg|err|btn|txt|num|val)$|^_*db(_\w+)?$|^\w*_db$'
     message: "principle #11 Abbreviated identifier hides meaning. Rename it with full words."
     severity: WARNING
     languages: [python]
