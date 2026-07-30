@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.4.0 (2026-07-30)
+
+### Features
+
+- **rules**: flag db_* and *_db compounds in the abbreviation rule
+
 ## js-v0.3.4 (2026-05-25)
 
 ### Bug Fixes
