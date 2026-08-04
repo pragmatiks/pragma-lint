@@ -119,7 +119,7 @@ Canonical engineering rules for all Pragmatiks code. Workers (developers and rev
 
 Applies to all code in this repository.
 
-Some principles only apply to one language or stack — flagged where relevant. This repo's `CLAUDE.md` § Engineering Principles is the canonical text — fix drift here first, then sync the other repos' embedded copies.
+Some principles only apply to one language or stack — flagged where relevant. Canonical text lives in the pragma-os repo at `docs/engineering-principles.md`; this section is an embedded copy — fix drift in the canonical file first, then sync every embedded copy.
 
 ## Enforcement layers
 
@@ -289,9 +289,9 @@ Every developer dispatch must:
 
 ## Maintenance
 
-This repo's `CLAUDE.md` § Engineering Principles is the canonical source. To change a principle:
+The canonical source is the pragma-os repo's `docs/engineering-principles.md`. To change a principle:
 
-1. Edit this repo's `CLAUDE.md` § Engineering Principles first.
+1. Edit `docs/engineering-principles.md` in pragma-os first.
 2. Update each repo's `CLAUDE.md` § Engineering Principles to match.
 3. Update `pragmatiks-lint` / `@pragmatiks/lint` rule versions and publish.
 4. Bump consumers (lockfile bumps cascade like SDK changes).
