@@ -65,7 +65,7 @@ If you find yourself thinking "I'm pretty sure this library does X" or "the API 
 
 Before writing custom code, work through these in order:
 
-1. **Reuse what is already in the project.** Check `python/pyproject.toml`, `js/package.json`, and the corresponding lockfiles for an existing dependency that solves the problem. Grep / graphify the codebase for prior patterns. The cheapest correct answer is already on disk.
+1. **Reuse what is already in the project.** Check `python/pyproject.toml`, `js/package.json`, and the corresponding lockfiles for an existing dependency that solves the problem. Grep the codebase for prior patterns. The cheapest correct answer is already on disk.
 2. **Adopt an established external library.** Look for popular, state-of-the-art, actively maintained libraries. Verify GitHub stars / last release / open critical issues / maintainer reputation. A boring widely-used library beats a custom implementation.
 3. **Custom code, only as a last resort.** Only after 1 and 2 fail should you write it from scratch.
 
@@ -119,7 +119,7 @@ Canonical engineering rules for all Pragmatiks code. Workers (developers and rev
 
 Applies to all code in this repository.
 
-Some principles only apply to one language or stack — flagged where relevant. Drift between workspace-root `../PRINCIPLES.md` and this repo's `CLAUDE.md` § Engineering Principles must be fixed in the canonical file first, then synced.
+Some principles only apply to one language or stack — flagged where relevant. This repo's `CLAUDE.md` § Engineering Principles is the canonical text — fix drift here first, then sync the other repos' embedded copies.
 
 ## Enforcement layers
 
@@ -289,19 +289,9 @@ Every developer dispatch must:
 
 ## Maintenance
 
-Workspace-root `../PRINCIPLES.md` is the canonical source. To change a principle:
+This repo's `CLAUDE.md` § Engineering Principles is the canonical source. To change a principle:
 
-1. Edit `../PRINCIPLES.md` first.
+1. Edit this repo's `CLAUDE.md` § Engineering Principles first.
 2. Update each repo's `CLAUDE.md` § Engineering Principles to match.
 3. Update `pragmatiks-lint` / `@pragmatiks/lint` rule versions and publish.
 4. Bump consumers (lockfile bumps cascade like SDK changes).
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- ALWAYS read graphify-out/GRAPH_REPORT.md before reading any source files, running grep/glob searches, or answering codebase questions. The graph is your primary map of the codebase.
-- IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
-- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
