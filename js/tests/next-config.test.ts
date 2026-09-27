@@ -158,7 +158,7 @@ describe("design system loading", () => {
   });
 
   it("fails on a Tailwind version mismatch", async () => {
-    const root = createTrackedProject({ postcssVersion: "4.1.16" });
+    const root = createTrackedProject({ postcssVersion: "4.3.2" });
     await expect(loadDesignSystem(buildOptions(root))).rejects.toThrow(
       /one Tailwind version/,
     );
@@ -185,7 +185,7 @@ describe("design system loading", () => {
       recursive: true,
     });
     await expect(loadDesignSystem(buildOptions(root))).rejects.toThrow(
-      /@tailwindcss\/postcss cannot be resolved from .+\. To fix it, install @tailwindcss\/postcss at ~4\.1\.17 in the app root\./,
+      /@tailwindcss\/postcss cannot be resolved from .+\. To fix it, install @tailwindcss\/postcss at ~4\.3\.3 in the app root\./,
     );
   });
 });

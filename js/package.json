@@ -38,13 +38,13 @@
   },
   "peerDependencies": {
     "@eslint/css": "^2.0.0",
-    "@tailwindcss/node": "~4.1.17",
-    "@tailwindcss/postcss": "~4.1.17",
-    "eslint": "^9.38.0",
+    "@tailwindcss/node": "~4.3.3",
+    "@tailwindcss/postcss": "~4.3.3",
+    "eslint": "^10.11.0",
     "eslint-plugin-react-x": "^5.20.8",
     "eslint-plugin-sonarjs": "^4.0.0",
     "eslint-plugin-unicorn": "^64.0.0",
-    "tailwindcss": "~4.1.17",
+    "tailwindcss": "~4.3.3",
     "typescript-eslint": "^8.70.1"
   },
   "peerDependenciesMeta": {
@@ -66,10 +66,10 @@
   },
   "devDependencies": {
     "@eslint/css": "2.0.0",
-    "@tailwindcss/node": "4.1.17",
-    "@tailwindcss/postcss": "4.1.17",
-    "@types/node": "^24.0.0",
-    "eslint": "^9.38.0",
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^26.0.0",
+    "eslint": "^10.11.0",
     "eslint-config-next": "16.2.11",
     "eslint-plugin-react-x": "5.20.8",
     "eslint-plugin-sonarjs": "^4.0.3",
@@ -86,11 +86,6 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   },
   "keywords": [
     "eslint",

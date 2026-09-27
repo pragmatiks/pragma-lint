@@ -643,6 +643,14 @@ export function Field() {
 `,
       count: 0,
     },
+    {
+      name: "template id reading the same JSX element on both sides",
+      code: buildComponent(
+        `<><label htmlFor={\`\${String(<Marker />)}-email\`}>Email</label><input id={\`\${String(<Marker />)}-email\`} /></>`,
+        `const Marker = () => undefined;`,
+      ),
+      count: 0,
+    },
   ],
 };
 
