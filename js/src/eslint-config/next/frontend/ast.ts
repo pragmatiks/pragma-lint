@@ -37,11 +37,13 @@ export function toRuleNode(node: AstNode): Rule.Node {
 /**
  * Presents a node from ESLint's APIs as the node type the frontend rules read.
  *
- * @param node - A node ESLint hands over, such as a visitor argument, a scope definition node or
- *   the program root.
+ * @param node - A node ESLint hands over, such as a visitor argument, a scope definition node, a
+ *   reference identifier (a JSX name included) or the program root.
  * @returns The same node, typed as an `AstNode`.
  */
-export function toAstNode(node: Pick<Rule.Node, "type">): AstNode {
+export function toAstNode(
+  node: Pick<Rule.Node, "type"> | Scope.Reference["identifier"],
+): AstNode {
   return node as unknown as AstNode;
 }
 

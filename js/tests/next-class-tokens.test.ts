@@ -182,7 +182,7 @@ function buildButton(classes: string): string {
 `;
 }
 
-describe("AC-1 class tokens compiled by Tailwind 4.1.17", () => {
+describe("AC-1 class tokens compiled by Tailwind 4.3.3", () => {
   it.each(CLASS_CASES)(
     "$rule: `$classes` gives $count",
     async ({ classes, rule, count }) => {

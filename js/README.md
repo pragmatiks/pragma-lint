@@ -10,20 +10,20 @@ This package has no `bin` entry. Command-line integration belongs in `pragma-cli
 
 **Package-wide** (the root entry and `/eslint-config/next`):
 
-| Package                 | Range     |
-| ----------------------- | --------- |
-| `eslint`                | `^9.38.0` |
-| `typescript-eslint`     | `^8.70.1` |
-| `eslint-plugin-sonarjs` | `^4.0.0`  |
-| `eslint-plugin-unicorn` | `^64.0.0` |
+| Package                 | Range      |
+| ----------------------- | ---------- |
+| `eslint`                | `^10.11.0` |
+| `typescript-eslint`     | `^8.70.1`  |
+| `eslint-plugin-sonarjs` | `^4.0.0`   |
+| `eslint-plugin-unicorn` | `^64.0.0`  |
 
 **`/eslint-config/next` only** (optional peers; install them when you use `@pragmatiks/lint/eslint-config/next`):
 
 | Package                 | Range     | Why                                                                  |
 | ----------------------- | --------- | -------------------------------------------------------------------- |
-| `@tailwindcss/node`     | `~4.1.17` | Compiles class strings with the project's own Tailwind design system |
-| `tailwindcss`           | `~4.1.17` | Version check against the project                                    |
-| `@tailwindcss/postcss`  | `~4.1.17` | Version check against the project                                    |
+| `@tailwindcss/node`     | `~4.3.3`  | Compiles class strings with the project's own Tailwind design system |
+| `tailwindcss`           | `~4.3.3`  | Version check against the project                                    |
+| `@tailwindcss/postcss`  | `~4.3.3`  | Version check against the project                                    |
 | `@eslint/css`           | `^2.0.0`  | Lints `.css` files                                                   |
 | `eslint-plugin-react-x` | `^5.20.8` | Leaked conditional rendering (typed)                                 |
 
@@ -72,8 +72,7 @@ Every config object you add after the result must set `files`, for example `file
 
 - **Not `--cache`-safe across stylesheet edits.** Class checks depend on the stylesheet, which ESLint's cache does not track.
 - **Restart after editing a stylesheet.** The design system loads when the config is built, so persistent ESLint processes and editor servers keep the old theme until restarted.
-- **DEP0205 on Node 26.** `@tailwindcss/node` 4.1.17 prints a DEP0205 deprecation warning on every run under Node 26. It is harmless.
-- **Tailwind bumps.** Rerun the class-token corpus (`tests/next-class-tokens.test.ts`, AC-1) at the new version before widening the `~4.1.17` peer range. The config uses Tailwind's `__unstable__loadDesignSystem`; a load canary and the version check fail fast when it changes shape.
+- **Tailwind bumps.** Rerun the class-token corpus (`tests/next-class-tokens.test.ts`, AC-1) at the new version before widening the `~4.3.3` peer range. The config uses Tailwind's `__unstable__loadDesignSystem`; a load canary and the version check fail fast when it changes shape.
 
 ### Focus patterns
 
@@ -143,7 +142,7 @@ Fix these by rewriting the code:
 
 ## Development
 
-| Command                                            | Purpose                                                                                                                                                                             |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `task js:check` / `task js:test` / `task js:build` | Lint and type check / tests (Node `>=22.15` for `module.registerHooks`; `mise.toml` pins Node 24) / build                                                                           |
-| `task js:pack`                                     | Install, build and `npm pack` the committed HEAD with CI's toolchain (Node 22, pnpm 9, latest npm) in a throwaway worktree, printing all three versions; the tarball lands in `js/` |
+| Command                                            | Purpose                                                                                                                                                                                  |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `task js:check` / `task js:test` / `task js:build` | Lint and type check / tests (Node `>=22.15` for `module.registerHooks`; `mise.toml` pins Node 26) / build                                                                                |
+| `task js:pack`                                     | Install, build and `npm pack` the committed HEAD with CI's toolchain (Node 26, pnpm 12.6.0, latest npm) in a throwaway worktree, printing all three versions; the tarball lands in `js/` |

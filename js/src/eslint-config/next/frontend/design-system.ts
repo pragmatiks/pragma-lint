@@ -153,7 +153,7 @@ interface PackageManifest {
 
 const DEFAULT_THEME_OPTION = 4;
 const CACHE_LIMIT = 10_000;
-const SUPPORTED_TAILWIND_RANGE = "~4.1.17";
+const SUPPORTED_TAILWIND_RANGE = "~4.3.3";
 const VERSION_RECOVERY = `pin tailwindcss, @tailwindcss/postcss and @tailwindcss/node to the same ${SUPPORTED_TAILWIND_RANGE} version`;
 
 const CANARY_EXPECTATIONS: readonly {

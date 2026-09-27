@@ -70,7 +70,7 @@ export const ANY_PRAGMATIKS_RULE = "any pragmatiks rule";
 /**
  * The Tailwind version every fixture project installs.
  */
-export const TAILWIND_VERSION = "4.1.17";
+export const TAILWIND_VERSION = "4.3.3";
 
 /**
  * The minimal P1 focus class string.
