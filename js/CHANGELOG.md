@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.5.0 (2026-09-27)
+
+### Features
+
+- **js**: add /next frontend design rules backed by Tailwind's design system
+
 ## js-v0.4.1 (2026-07-30)
 
 ### Bug Fixes
