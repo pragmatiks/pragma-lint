@@ -42,9 +42,11 @@ const PREVENT_ABBREVIATIONS_OPTS = {
   },
 };
 
+const LINT_FILES = ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"];
+
 export default defineConfig([
   {
-    files: ["**/*.{ts,tsx,mts,cts,js,mjs,cjs}"],
+    files: LINT_FILES,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -53,10 +55,10 @@ export default defineConfig([
       },
     },
   },
-  sonarjs.configs.recommended,
-  unicorn.configs.recommended,
+  { ...sonarjs.configs.recommended, files: LINT_FILES },
+  { ...unicorn.configs.recommended, files: LINT_FILES },
   {
-    files: ["**/*.{ts,tsx,mts,cts,js,mjs,cjs}"],
+    files: LINT_FILES,
     rules: {
       complexity: ["error", COMPLEXITY_OPTS],
       "max-lines-per-function": ["error", MAX_LINES_PER_FUNCTION_OPTS],

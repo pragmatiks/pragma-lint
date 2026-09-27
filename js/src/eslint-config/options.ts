@@ -41,3 +41,21 @@ export const PREVENT_ABBREVIATIONS_OPTS = {
     e: true,
   },
 };
+
+/**
+ * `unicorn/filename-case` options for Next apps: kebab-case modules, PascalCase components and
+ * camelCase hooks and utilities are all allowed.
+ */
+export const FILENAME_CASE_OPTIONS = {
+  cases: {
+    kebabCase: true,
+    pascalCase: true,
+    camelCase: true,
+  },
+};
+
+/**
+ * `unicorn/no-useless-undefined` options for React: explicit resets such as
+ * `setState(undefined)` are meaningful arguments, so arguments are not checked.
+ */
+export const NO_USELESS_UNDEFINED_OPTIONS = { checkArguments: false };

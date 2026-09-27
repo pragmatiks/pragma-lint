@@ -9,7 +9,7 @@ The CLI surface belongs in `pragma-cli`.
 ## Packages
 
 - `python/` exports `run_check`, `Finding`, and `list_rules` from `pragmatiks_lint`.
-- `js/` exports `pragmatiksConfig`, eslint option constants, `PRAGMATIKS_LINT_FILES`, and semgrep rule path helpers from `@pragmatiks/lint`.
+- `js/` exports `pragmatiksConfig`, eslint option constants, `PRAGMATIKS_LINT_FILES`, and semgrep rule path helpers from `@pragmatiks/lint`, and `pragmatiksNextConfig` for Next.js apps from `@pragmatiks/lint/eslint-config/next`.
 
 ## Development
 

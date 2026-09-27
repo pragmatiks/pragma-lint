@@ -33,8 +33,9 @@ Use Taskfile commands:
 | `task python:build` | Build wheel and sdist |
 | `task js:install` | Install JS dependencies |
 | `task js:check` | ESLint and TypeScript |
-| `task js:test` | Vitest integration tests |
+| `task js:test` | Vitest integration tests (Node >=22.15) |
 | `task js:build` | Build npm dist |
+| `task js:pack` | Pack the committed HEAD as an npm tarball with the CI publish toolchain (commit first) |
 | `task all:check` | Run all checks |
 
 ## Testing

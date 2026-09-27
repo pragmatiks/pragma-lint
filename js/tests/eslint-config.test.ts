@@ -112,7 +112,19 @@ describe("pragmatiksConfig", () => {
   });
 
   it("exports the standard JS and TS file glob", () => {
-    expect(PRAGMATIKS_LINT_FILES).toEqual(["**/*.{ts,tsx,mts,cts,js,mjs,cjs}"]);
+    expect(PRAGMATIKS_LINT_FILES).toEqual([
+      "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}",
+    ]);
+  });
+
+  it("scopes every object except the global ignores to the lint glob", () => {
+    const scoped = pragmatiksConfig().filter(
+      (entry) => entry.ignores === undefined,
+    );
+    expect(scoped.length).toBeGreaterThan(0);
+    for (const entry of scoped) {
+      expect(entry.files).toEqual(PRAGMATIKS_LINT_FILES);
+    }
   });
 
   it("exposes the vendored semgrep rules directory in settings", () => {
