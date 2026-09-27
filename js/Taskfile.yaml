@@ -33,6 +33,22 @@ tasks:
       - vendor-rules
     cmd: pnpm build
 
+  pack:
+    desc: Pack the committed HEAD with CI's toolchain (Node 22, pnpm 9, latest npm) in a throwaway worktree, leaving this checkout's node_modules untouched
+    vars:
+      CI_TOOLCHAIN: mise exec node@22 pnpm@9 --
+      PACK_ROOT:
+        sh: mktemp -d
+      CHECKOUT: "{{.PACK_ROOT}}/checkout"
+    cmds:
+      - defer: git worktree remove --force "{{.CHECKOUT}}"; rm -rf "{{.PACK_ROOT}}"
+      - git worktree add --detach "{{.CHECKOUT}}" HEAD
+      - "{{.CI_TOOLCHAIN}} node -v"
+      - "{{.CI_TOOLCHAIN}} pnpm -v"
+      - '{{.CI_TOOLCHAIN}} pnpm --dir "{{.CHECKOUT}}/js" install --frozen-lockfile'
+      - '{{.CI_TOOLCHAIN}} task --dir "{{.CHECKOUT}}/js" build'
+      - '{{.CI_TOOLCHAIN}} npx --yes --package npm@latest --call ''npm -v && npm pack "{{.CHECKOUT}}/js" --pack-destination "{{.TASKFILE_DIR}}"'''
+
   publish:
     desc: Publish to npm registry
     cmd: pnpm publish --access public

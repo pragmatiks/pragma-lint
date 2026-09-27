@@ -14,6 +14,10 @@
     "./eslint-config": {
       "types": "./dist/eslint-config/index.d.ts",
       "import": "./dist/eslint-config/index.js"
+    },
+    "./eslint-config/next": {
+      "types": "./dist/eslint-config/next/index.d.ts",
+      "import": "./dist/eslint-config/next/index.js"
     }
   },
   "files": [
@@ -29,26 +33,56 @@
     "check": "eslint . && tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@eslint/css-tree": "^4.0.5"
+  },
   "peerDependencies": {
-    "eslint": "^9.0.0",
+    "@eslint/css": "^2.0.0",
+    "@tailwindcss/node": "~4.1.17",
+    "@tailwindcss/postcss": "~4.1.17",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react-x": "^5.20.8",
     "eslint-plugin-sonarjs": "^4.0.0",
     "eslint-plugin-unicorn": "^64.0.0",
-    "typescript-eslint": "^8.0.0"
+    "tailwindcss": "~4.1.17",
+    "typescript-eslint": "^8.70.1"
+  },
+  "peerDependenciesMeta": {
+    "@eslint/css": {
+      "optional": true
+    },
+    "@tailwindcss/node": {
+      "optional": true
+    },
+    "@tailwindcss/postcss": {
+      "optional": true
+    },
+    "eslint-plugin-react-x": {
+      "optional": true
+    },
+    "tailwindcss": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@eslint/css": "2.0.0",
+    "@tailwindcss/node": "4.1.17",
+    "@tailwindcss/postcss": "4.1.17",
     "@types/node": "^24.0.0",
-    "eslint": "^9.18.0",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "16.2.11",
+    "eslint-plugin-react-x": "5.20.8",
     "eslint-plugin-sonarjs": "^4.0.3",
     "eslint-plugin-unicorn": "^64.0.0",
     "knip": "^6.12.1",
     "prettier": "^3.4.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.59.2",
+    "typescript-eslint": "^8.70.1",
     "vitest": "^2.1.8"
   },
   "engines": {
-    "node": ">=20"
+    "node": "^22.13.0 || >=24"
   },
   "publishConfig": {
     "access": "public"
