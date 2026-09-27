@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.6.0 (2026-09-27)
+
+### Features
+
+- **js**: require ESLint 10 and Tailwind 4.3
+
 ## js-v0.5.0 (2026-09-27)
 
 ### Features
