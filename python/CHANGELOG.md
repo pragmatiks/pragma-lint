@@ -8,6 +8,17 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.6.0 (2026-10-07)
+
+### Bug Fixes
+
+- **rules**: recognize Path.open and with-open as file I/O in pra-io-prefix-mismatch
+
+### Features
+
+- **python**: ship the strict no-comments check as pragmatiks_lint.comments
+- **rules**: drop the Python comment rules the strict comment check replaces
+
 ## python-v0.5.0 (2026-07-30)
 
 ### Features
