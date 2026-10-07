@@ -47,3 +47,8 @@ def save_empty_directory_pruned(directory_path: Path) -> None:
 
 async def read_async_state_file(state_path: Path) -> str:
     return state_path.read_text()
+
+
+def read_pid_lines(pid_path: Path) -> list[str]:
+    with pid_path.open() as pid_file:
+        return pid_file.readlines()
