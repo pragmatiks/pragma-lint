@@ -51,9 +51,10 @@ convention = "google"
 [tool.ruff.lint.isort]
 lines-after-imports = 2
 known-first-party = ["pragmatiks_lint"]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/fixtures/*.py" = ["D100", "D103"]
+"tests/fixtures/*.py" = ["D100", "D103", "I002"]
 
 [tool.ruff.format]
 preview = true

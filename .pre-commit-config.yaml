@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-comments
+        name: Enforce NO COMMENTS policy
+        entry: uv run --frozen --project python python -m pragmatiks_lint.comments
+        language: system
+        types: [python]
+        exclude: ^python/tests/fixtures/

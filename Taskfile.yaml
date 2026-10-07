@@ -13,10 +13,12 @@ tasks:
     cmd: task --list-all
 
   all:install:
-    desc: Install Python and JS dependencies
+    desc: Install Python and JS dependencies and the pre-commit hook
     deps:
       - python:install
       - js:install
+    cmds:
+      - pre-commit install
 
   all:format:
     desc: Format Python and JS packages
