@@ -8,6 +8,7 @@ tasks:
   vendor-rules:
     desc: Vendor shared semgrep rules into the Python package
     cmds:
+      - rm -rf src/pragmatiks_lint/semgrep_rules
       - mkdir -p src/pragmatiks_lint/semgrep_rules
       - cp ../rules/*.yml src/pragmatiks_lint/semgrep_rules/
 

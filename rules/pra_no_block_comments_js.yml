@@ -1,0 +1,6 @@
+rules:
+  - id: pra-no-block-comments-js
+    pattern-regex: '/\*(?!\*)[\s\S]*?\*/'
+    message: "principle #10 Block comments make code harder to trust. Delete the comment; rationale worth keeping goes in the owning docstring."
+    severity: ERROR
+    languages: [typescript, javascript]

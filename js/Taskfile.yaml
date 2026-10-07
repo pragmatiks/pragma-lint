@@ -8,6 +8,7 @@ tasks:
   vendor-rules:
     desc: Vendor shared semgrep rules into the npm package
     cmds:
+      - rm -rf src/semgrep-rules
       - mkdir -p src/semgrep-rules
       - cp ../rules/*.yml src/semgrep-rules/
 
