@@ -1,5 +1,15 @@
 # Changelog
 
+## js-v0.7.0 (2026-10-07)
+
+### Bug Fixes
+
+- **rules**: recognize Path.open and with-open as file I/O in pra-io-prefix-mismatch
+
+### Features
+
+- **rules**: drop the Python comment rules the strict comment check replaces
+
 ## js-v0.6.0 (2026-09-27)
 
 ### Features
