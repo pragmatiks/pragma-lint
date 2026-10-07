@@ -17,7 +17,7 @@ Python and JS publish independently through separate workflows. Shared `rules/` 
 
 ## Constraints
 
-- Library-only: no Python `[project.scripts]` entry and no npm `bin` field.
+- Library-only: no Python `[project.scripts]` entry and no npm `bin` field. The one sanctioned module entry is `python -m pragmatiks_lint.comments`, the pre-commit hook target; `comments.py` imports only the standard library, but `-m` still imports the package `__init__` and its dependencies.
 - Build tasks vendor `rules/*.yml` into package-local ignored directories.
 - Do not push remotes or publish packages from this repository without explicit authorization.
 
@@ -29,22 +29,23 @@ Use Taskfile commands:
 |---------|---------|
 | `task python:install` | Install Python dependencies |
 | `task python:check` | Ruff and mypy |
-| `task python:test` | Python semgrep smoke tests |
+| `task python:test` | Python rule smoke tests and comment-check tests |
 | `task python:build` | Build wheel and sdist |
 | `task js:install` | Install JS dependencies |
 | `task js:check` | ESLint and TypeScript |
 | `task js:test` | Vitest integration tests (Node >=22.15) |
 | `task js:build` | Build npm dist |
 | `task js:pack` | Pack the committed HEAD as an npm tarball with the CI publish toolchain (commit first) |
+| `task all:install` | Install Python and JS dependencies and the pre-commit hook |
 | `task all:check` | Run all checks |
 
 ## Testing
 
-Run `task python:test` for Python semgrep smoke coverage and `task js:test` for eslint config integration coverage. This repository has no e2e suite.
+Run `task python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments` check tests, and `task js:test` for eslint config integration coverage. This repository has no e2e suite.
 
 ## Dependency Policy
 
-Keep both packages library-only. CLI dependencies belong in `pragma-cli`, not here. JS uses peer dependencies for eslint ecosystem packages consumed by exported config, and dev dependencies for local tooling. Use registry-based dependencies only; do not commit editable sibling overrides.
+Keep both packages library-only; `python -m pragmatiks_lint.comments` is the one sanctioned module entry (pre-commit hook target; it needs `pragmatiks-lint` installed). CLI dependencies belong in `pragma-cli`, not here. JS uses peer dependencies for eslint ecosystem packages consumed by exported config, and dev dependencies for local tooling. Use registry-based dependencies only; do not commit editable sibling overrides.
 
 ## Evidence-based development
 

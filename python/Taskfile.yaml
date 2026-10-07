@@ -27,7 +27,7 @@ tasks:
       - uv run mypy
 
   test:
-    desc: Run Python semgrep smoke tests
+    desc: Run Python rule smoke tests and comment-check tests
     deps:
       - vendor-rules
     cmd: uv run pytest
