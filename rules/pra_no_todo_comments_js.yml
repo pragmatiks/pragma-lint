@@ -1,0 +1,6 @@
+rules:
+  - id: pra-no-todo-comments-js
+    pattern-regex: '(?i)(//|/\*)\s*(TODO(?!\(PRA-[0-9]+\))|FIXME|XXX)\b'
+    message: "principle #10 Planning comments decay. Track the work as an issue and delete the comment."
+    severity: ERROR
+    languages: [typescript, javascript]
