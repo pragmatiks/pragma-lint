@@ -42,6 +42,7 @@ def test_srp_js_boundaries_ignore_words() -> None:
 
 
 IO_PREFIX_NON_VIOLATION_FIXTURES: tuple[str, ...] = (
+    "io_prefix_builtin_open_non_violation.py",
     "io_prefix_pathlib_non_violation.py",
     "io_prefix_subprocess_non_violation.py",
 )
@@ -49,14 +50,13 @@ IO_PREFIX_NON_VIOLATION_FIXTURES: tuple[str, ...] = (
 
 @pytest.mark.parametrize("fixture_name", IO_PREFIX_NON_VIOLATION_FIXTURES)
 def test_io_prefix_recognizes_hidden_io(fixture_name: str) -> None:
-    """Verify pathlib, subprocess, and shutil idioms are recognized as I/O."""
+    """Verify builtin open, pathlib, subprocess, and shutil idioms are recognized as I/O."""
     fixture_path = Path(__file__).parent / "fixtures" / fixture_name
     findings = run_check([fixture_path], language="python")
     io_prefix_findings = [
         finding
         for finding in findings
-        if finding.rule_id == "pra-io-prefix-mismatch"
-        or finding.rule_id.endswith(".pra-io-prefix-mismatch")
+        if finding.rule_id == "pra-io-prefix-mismatch" or finding.rule_id.endswith(".pra-io-prefix-mismatch")
     ]
     assert io_prefix_findings == []
 
