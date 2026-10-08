@@ -113,29 +113,28 @@ Publish only with explicit authorization. Python publishes through `.github/work
 Re-pointing an already-pushed tag requires explicit supervisor authorization. Default recovery for a wedged publish is fix-forward to the next patch version (e.g. 0.3.1 → 0.3.2), not force-moving the existing tag.
 
 ## Engineering Principles
-# Pragmatiks Engineering Principles
 
-Canonical engineering rules for all Pragmatiks code. Workers (developers and reviewers) must follow these in every dispatch. Reviewers must check each PR against this list and produce one finding per violation.
+Canonical engineering rules for all Pragmatiks code in this repository. Workers (developers and reviewers) must follow these in every dispatch. Reviewers must check each PR against this list and produce one finding per violation.
 
-## Scope
+### Scope
 
-Applies to all code in this repository.
+Applies to all code in this repository. Some principles only apply to one language or stack — flagged where relevant.
 
-Some principles only apply to one language or stack — flagged where relevant. Canonical text lives in the pragma-os repo at `docs/engineering-principles.md`; this section is an embedded copy — fix drift in the canonical file first, then sync every embedded copy.
+This section is an embedded copy of the pragma-os repo's `docs/engineering-principles.md`, the canonical source. The same text is embedded in every Pragmatiks subrepo's `CLAUDE.md`. When a principle changes, every embed must be updated in lockstep and the corresponding `pragmatiks-lint` / `@pragmatiks/lint` rule versions bumped.
 
-## Enforcement layers
+### Enforcement layers
 
 | Layer | What | Where |
 |---|---|---|
 | 1. Style + standard smells | `ruff` (Python), `eslint` (TS) with curated rule set | per-repo `task check` / `pnpm lint` |
-| 2. Complexity gating | `radon`/`xenon` (Python), `eslint-plugin-sonarjs/cognitive-complexity` (TS) | CI fail on regression |
+| 2. Complexity gating | `radon` / `xenon` (Python), `eslint-plugin-sonarjs/cognitive-complexity` (TS) | CI fail on regression |
 | 3. Pragmatiks-specific rules | `semgrep` ruleset (cross-language) + custom scripts | shared via `pragmatiks-lint` (PyPI) and `@pragmatiks/lint` (npm) |
 
 If a principle has a programmatic check, the reviewer relies on the tool. If the principle is judgment-based, the reviewer comments with `⚠️` severity.
 
 ---
 
-## 1. YAGNI — You Aren't Gonna Need It
+### 1. YAGNI — You Aren't Gonna Need It
 
 Do not add features, abstractions, or configuration for hypothetical future needs. No premature generalization, no speculative interfaces, no "we might need this later" code.
 
@@ -145,7 +144,7 @@ Do not add features, abstractions, or configuration for hypothetical future need
 
 **Reviewer hint**: flag any new abstraction layer not justified by current callers.
 
-## 2. KISS — Keep It Simple
+### 2. KISS — Keep It Simple
 
 Prefer the simplest implementation that works. Inline the obvious; abstract on the second caller — duplication is a smell, not a feature.
 
@@ -155,7 +154,7 @@ Prefer the simplest implementation that works. Inline the obvious; abstract on t
 
 **Reviewer hint**: extract-method PR? Verify there are at least two callers in the diff or repo.
 
-## 3. Boy Scout Rule
+### 3. Boy Scout Rule
 
 Leave the file better than you found it. Small adjacent cleanup (rename, move, dead-line removal) is welcome when touching a file. Do not pile in unrelated refactors.
 
@@ -163,7 +162,7 @@ Leave the file better than you found it. Small adjacent cleanup (rename, move, d
 
 **Reviewer hint**: if a PR touches no nearby messy code, no penalty. If it adds new mess, block.
 
-## 4. Open–Closed Principle
+### 4. Open–Closed Principle
 
 Modules should be open for extension and closed for modification. New behavior added by adding code, not by modifying existing tested code paths.
 
@@ -171,7 +170,7 @@ Modules should be open for extension and closed for modification. New behavior a
 
 **Reviewer hint**: if a PR modifies a stable public interface or stable internal contract to add a feature that could have been added via a new function/method, request an alternative.
 
-## 5. Single Responsibility Principle
+### 5. Single Responsibility Principle
 
 Each function, method, class, and module should have one reason to change. If you cannot describe what a unit does without saying "and" or "or", split it.
 
@@ -182,7 +181,7 @@ Each function, method, class, and module should have one reason to change. If yo
 
 **Reviewer hint**: if a function name reads as compound, splitting is mandatory.
 
-## 6. Always Use Dependency Injection
+### 6. Always Use Dependency Injection
 
 Pass dependencies in via constructor / function arguments. Do not instantiate concrete services inside business logic. Wire the graph at the application boundary (FastAPI lifespan, CLI entry point, Next.js server boundary, test harness).
 
@@ -191,7 +190,7 @@ Pass dependencies in via constructor / function arguments. Do not instantiate co
 
 **Reviewer hint**: a class that constructs an `httpx.AsyncClient` inside `__init__` is wrong; it should accept one as a constructor arg.
 
-## 7. I/O Prefix Discipline
+### 7. I/O Prefix Discipline
 
 Function/method names starting with `get_`, `fetch_`, `retrieve_`, `load_`, `save_`, `read_`, `write_`, `query_` must perform I/O (network, disk, database, IPC). Pure-computation functions must use neutral names (`compute_*`, `build_*`, `derive_*`, `format_*`, `parse_*`).
 
@@ -200,17 +199,17 @@ Function/method names starting with `get_`, `fetch_`, `retrieve_`, `load_`, `sav
 
 **Reviewer hint**: a `get_user_id_from_token(token: str) -> str` that just decodes a JWT must be renamed `parse_user_id_from_token` or `extract_user_id`.
 
-## 8. Twelve-Factor App
+### 8. Twelve-Factor App
 
 Configuration via environment variables only. Read environment at the application boundary, never deep in business logic. No credentials, URLs, or behavior flags hard-coded. Stateless processes. Treat backing services (DB, cache, queue) as attached resources via URLs.
 
 **Programmatic check**:
 - `pra-env-read-deep` semgrep rule: flags `os.environ` / `os.getenv` / `process.env` reads outside designated boundary modules.
-- `pra-no-hardcoded-secrets` semgrep rule: flags string literals matching common credential patterns (sk-, AKIA, etc.).
+- `pra-no-hardcoded-secrets` semgrep rule: flags string literals matching common credential patterns (`sk-`, `AKIA`, etc.).
 
 **Reviewer hint**: env reads should live in a settings module (Python: `Settings` Pydantic class; TS: a single `env.ts` boundary file).
 
-## 9. Clean Code (default)
+### 9. Clean Code (default)
 
 When unsure, follow Clean Code: meaningful names, small functions, single level of abstraction per function, no flag arguments, fewer arguments over more, prefer pure functions, fail fast at boundaries.
 
@@ -218,23 +217,24 @@ When unsure, follow Clean Code: meaningful names, small functions, single level 
 
 **Reviewer hint**: if a function takes a boolean flag that switches behavior, flag (split into two functions).
 
-## 10. No Comments
+### 10. No Comments
 
-The code must be self-explanatory. Do not write comments. Exceptions:
+Code must self-explain. No comments — none, WHY comments included (amended 2026-08-31; they metastasized). Docstrings = documentation, not comments — rule not restrict them. Requirements:
 
-- Public docstrings on library APIs (`pragma-sdk` public surface).
-- A single-line WHY comment for a non-obvious workaround, hidden constraint, or subtle invariant. Removing it would confuse a future reader.
+- Google-style docstrings **required** on every module, class, function, method (not only `pragma-sdk` public surface). Describe purpose, arguments, returns, raised exceptions; no noise padding.
+- Docstrings address the **caller**: contract, constraints, how to use. Not implementation narration, not change history, not a log of what the function used to do. A workaround, hidden constraint, or subtle invariant worth recording goes in the owning function's docstring (a `Note:` section when it needs a home), or the code gets restructured until it needs no explanation.
+- Tool directives that must sit on the flagged line (`# noqa`, `eslint-disable`, `# type: ignore`) stay, bare — justification lives in the docstring, not appended prose.
 
-Forbidden: block comments restating what the code does; section dividers; commented-out code; "added for X" / "used by Y" trail comments; multi-line docstrings on private internals; planning comments left in source (`# TODO: refactor later`).
+Forbidden: ALL non-docstring comments — WHY comments, block comments restating code, section dividers, commented-out code, "added for X" / "used by Y" trail comments, planning comments (`# TODO: refactor later`).
 
 **Programmatic check**:
-- `pra-no-block-comments` semgrep rule: flags multi-line `#` blocks in Python and `/* ... */` blocks in TS that are not docstrings.
-- `pra-no-todo-comments` semgrep rule: flags `# TODO` / `// TODO` / `/* TODO */`.
-- Existing custom script for comment ban (to migrate to semgrep).
+- `check-comments` pre-commit hook (`python -m pragmatiks_lint.comments` from `pragmatiks-lint`, pinned via `additional_dependencies`): flags every comment in every Python file, trailing included; only a line-1 shebang and exact bare tool directives pass (`# noqa`, `# ruff: noqa`, `# type: ignore`, `# ty: ignore`, each with optional codes; `# fmt: off|on|skip`); a directive with prose fails.
+- `pra-no-block-comments-js` semgrep rule: flags every `/* ... */` comment in TS/JS except JSDoc `/** ... */`.
+- `pra-no-todo-comments-js` semgrep rule: flags a `//` or `/* */` comment in TS/JS that opens with `TODO`, `FIXME` or `XXX` (any case), except `TODO(PRA-n)`.
 
-**Reviewer hint**: every comment in the diff must be justifiable as WHY. Otherwise: delete and rename code instead.
+**Reviewer hint**: every non-directive comment in diff = finding. Rationale that matters moves to the nearest docstring; rationale that does not matter dies. Docstrings reading like implementation walkthroughs or changelogs = finding too.
 
-## 11. Semantic Names — No Abbreviations
+### 11. Semantic Names — No Abbreviations
 
 Identifiers use full words. No `k8s`, `cfg`, `db`, `req`, `res`, `ctx`, `tmp`, `pkg`, `svc`, `mgr`, `repo`, `usr`, `pwd`, `idx`, `cnt`, `msg`, `err`, etc. Use `kubernetes`, `config`, `database`, `request`, `response`, `context`, `temporary`, `package`, `service`, `manager`, `repository`, `user`, `password`, `index`, `count`, `message`, `error`.
 
@@ -264,12 +264,12 @@ Provider event `on_delete` stays (provider deletes external object).
 
 **Programmatic check**:
 - `eslint-plugin-unicorn/prevent-abbreviations` (TS) — direct fit, allowlist config.
-- `pra-no-abbreviations` semgrep rule (Python) — regex matching forbidden short identifiers, allowlist.
+- `pra-no-abbreviations-python` semgrep rule (Python) — regex matching forbidden short identifiers, allowlist.
 - `packages/api/scripts/check_openapi_spec.py` (`task api:check`) — flags infrastructure terms in generated OpenAPI spec. Kubernetes, pod, namespace, and vendor names not in term list yet — reviewer scans for them.
 
 **Reviewer hint**: `db`, `cfg`, `k8s` in any new code = blocker. Banned synonym from vocabulary table on any surface = blocker.
 
-## 12. Compound Names Violate SRP
+### 12. Compound Names Violate SRP
 
 If a function or method name contains `and`, `or`, `then`, or describes multiple actions, it violates SRP and must be split. Same applies to class names and module names. Examples to forbid: `validate_and_save_user`, `fetch_or_create_session`, `build_and_publish_wheel`.
 
@@ -278,13 +278,27 @@ If a function or method name contains `and`, `or`, `then`, or describes multiple
 
 **Reviewer hint**: blocker — propose the split inline.
 
+### 13. Leading Underscores Are Deliberate, Not Habitual
+
+Default every attribute, method, function, and variable to a plain public name. Encapsulation comes from module boundaries and clear naming, not reflexive underscore prefixes. A leading underscore is allowed only where it does real work:
+
+- A backing field paired with a same-named public property or accessor (`self._jetstream` behind a `jetstream` property).
+- Language-mandated names: dunders (`__init__`, `__enter__`, etc.), `self`, `cls`, the throwaway `_` in unpacking.
+
+Everything else is public. If no same-named public accessor mediates the identifier, drop the underscore. Applies to Python; TS/React keep their own conventions.
+
+**Programmatic check**:
+- `pra-no-underscore-members` semgrep rule (Python), warning severity: flags identifiers matching `^_[a-z]` in assignments, `def`, and attribute targets. A match paired with a same-named property in the same class is allowlisted; every other match needs reviewer judgment.
+
+**Reviewer hint**: a new `_name` with no same-named public accessor is a blocker. Propose the plain public name inline.
+
 ---
 
-## Reviewer protocol
+### Reviewer protocol
 
 Every reviewer dispatch must:
 
-1. Run `pragmatiks-lint check` (programmatic findings) before reading the diff.
+1. Run `pragma lint check <paths>` (programmatic findings) before reading the diff.
 2. Read the diff.
 3. For each principle, produce findings as:
 
@@ -300,12 +314,12 @@ Every reviewer dispatch must:
 
 A reviewer who fails to invoke programmatic tooling but only eyeballs the diff is incomplete and should be re-run.
 
-## Developer protocol
+### Developer protocol
 
 Every developer dispatch must:
 
-1. Read this file before starting.
-2. Run `pragmatiks-lint check` locally before opening a PR.
+1. Read this `## Engineering Principles` section before starting.
+2. Run `pragma lint check <paths>` locally before opening a PR.
 3. Resolve all 🚨 blockers from the lint pack. ⚠️ findings: address or justify in PR body.
 4. State principle compliance in the callback to the supervisor.
 
