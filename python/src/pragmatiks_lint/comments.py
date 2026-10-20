@@ -19,6 +19,8 @@ import sys
 import tokenize
 from pathlib import Path
 
+from pragmatiks_lint.report import print_report
+
 
 RULE_CODES = r"[A-Z]+[0-9]+(?:, [A-Z]+[0-9]+)*"
 CHECKER_CODES = r"[a-z0-9-]+(?:, ?[a-z0-9-]+)*"
@@ -51,12 +53,7 @@ def main(file_paths: list[str]) -> int:
         0 when every file is clean, 1 otherwise.
     """
     report_lines = [line for file_path in file_paths for line in collect_report_lines(file_path)]
-    if not report_lines:
-        return 0
-
-    print("\n".join(report_lines))
-    print(POLICY_FOOTER)
-    return 1
+    return print_report(report_lines, POLICY_FOOTER)
 
 
 def collect_report_lines(file_path: str) -> list[str]:
