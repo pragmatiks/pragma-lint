@@ -7,3 +7,8 @@ repos:
         language: system
         types: [python]
         exclude: ^python/tests/fixtures/
+      - id: check-sources
+        name: Reject sibling path overrides
+        entry: uv run --frozen --project python python -m pragmatiks_lint.sources
+        language: system
+        files: (^|/)(pyproject\.toml|package\.json|pnpm-workspace\.yaml)$

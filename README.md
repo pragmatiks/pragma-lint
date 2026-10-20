@@ -8,7 +8,7 @@ The CLI surface belongs in `pragma-cli`.
 
 ## Packages
 
-- `python/` exports `run_check`, `Finding`, and `list_rules` from `pragmatiks_lint`, and ships the strict no-comments check `pragmatiks_lint.comments` (`python -m pragmatiks_lint.comments <files>`, a pre-commit hook target).
+- `python/` exports `run_check`, `Finding`, and `list_rules` from `pragmatiks_lint`, and ships two pre-commit hook targets: the strict no-comments check `pragmatiks_lint.comments` (`python -m pragmatiks_lint.comments <files>`) and the dependency source check `pragmatiks_lint.sources` (`python -m pragmatiks_lint.sources <manifests>`), which rejects committed path overrides that leave the repository.
 - `js/` exports `pragmatiksConfig`, eslint option constants, `PRAGMATIKS_LINT_FILES`, and semgrep rule path helpers from `@pragmatiks/lint`, and `pragmatiksNextConfig` for Next.js apps from `@pragmatiks/lint/eslint-config/next`.
 
 ## Development
