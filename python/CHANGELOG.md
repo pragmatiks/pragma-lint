@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.7.0 (2026-10-20)
+
+### Features
+
+- **python**: ship the sibling-path source check as pragmatiks_lint.sources
+
 ## python-v0.6.0 (2026-10-07)
 
 ### Bug Fixes
