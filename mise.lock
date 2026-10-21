@@ -5,7 +5,7 @@ lockfile_version = 3
 [[tools."aqua:npm/cli"]]
 version = "12.2.1"
 backend = "aqua:npm/cli"
-specifiers = ["latest"]
+specifiers = ["12.2.1"]
 
 [tools."aqua:npm/cli"."platforms.linux-x64"]
 url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
@@ -59,10 +59,10 @@ url = "https://github.com/pre-commit/pre-commit/releases/download/v4.6.2/pre-com
 url_api = "https://api.github.com/repos/pre-commit/pre-commit/releases/assets/509317714"
 
 [[tools."pypi:commitizen"]]
-version = "4.15.1"
+version = "4.19.2"
 backend = "pypi:commitizen"
-specifiers = ["4.15.1"]
-uv = { path = ".mise/locks/pypi-commitizen/4.15.1", digest = "sha256:13e7239c445ca7332eba540646cac9ce371c7979bdd98705a30d23097bcc4675" }
+specifiers = ["4.19.2"]
+uv = { path = ".mise/locks/pypi-commitizen/4.19.2", digest = "sha256:e477add2a1adc88831bbbc2d29fcb2388fa925625f27ff5fcf15114fa80cddff" }
 
 [[tools.python]]
 version = "3.13.7"

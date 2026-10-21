@@ -1,14 +1,14 @@
 min_version = "2026.10.17"
 
 [tools]
-"aqua:npm/cli" = "latest"
+"aqua:npm/cli" = "12.2.1"
 python = "3.13.7"
 node = "26"
 pnpm = "12.6.0"
 task = "3.49.1"
 uv = "0.12.20"
 pre-commit = "4.6.2"
-"pypi:commitizen" = "4.15.1"
+"pypi:commitizen" = "4.19.2"
 yq = "4.54.1"
 
 [env]
