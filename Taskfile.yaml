@@ -19,7 +19,7 @@ tasks:
     desc: Install the locked toolchain, then Python and JS dependencies and the pre-commit hook
     cmds:
       - task: install:mise-ceiling
-      - mise install --locked
+      - mise install
       - task: all:install
 
   install:mise-ceiling:
