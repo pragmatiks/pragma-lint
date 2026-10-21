@@ -1,8 +1,9 @@
 name: Publish Python
 
 concurrency:
-  group: pragma-lint-publish
+  group: pragma-lint-release
   cancel-in-progress: false
+  queue: max
 
 on:
   push:
@@ -13,28 +14,38 @@ on:
       - ".github/workflows/publish-python.yaml"
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
-  bump-and-tag:
+  bump:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     outputs:
       bumped: ${{ steps.bump.outputs.bumped }}
-      version: ${{ steps.bump.outputs.version }}
+      version: ${{ steps.bump.outputs.version || steps.unreleased.outputs.version }}
+      unreleased-sha: ${{ steps.unreleased.outputs.sha }}
+      base: ${{ steps.base.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: astral-sh/setup-uv@v4
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          version: "0.5.x"
+          version: "0.12.20"
+          enable-cache: false
       - run: uv python install 3.13
-      - run: uv tool install commitizen
+      - run: uv tool install commitizen==4.19.2
       - name: Configure git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "pragma-ci-bot[bot]"
+          git config user.email "254457222+pragma-ci-bot[bot]@users.noreply.github.com"
+      - name: Record base
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Bump version
         id: bump
         working-directory: python
@@ -43,63 +54,221 @@ jobs:
           cz bump --yes --changelog
           EXIT_CODE=$?
           set -e
-          if [ $EXIT_CODE -eq 21 ] || [ $EXIT_CODE -eq 3 ]; then
-            echo "bumped=false" >> $GITHUB_OUTPUT
-          elif [ $EXIT_CODE -eq 0 ]; then
-            echo "bumped=true" >> $GITHUB_OUTPUT
+          if [ "$EXIT_CODE" -eq 21 ] || [ "$EXIT_CODE" -eq 3 ]; then
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          elif [ "$EXIT_CODE" -eq 0 ]; then
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
             NEW_VERSION=$(cz version --project)
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           else
-            exit $EXIT_CODE
+            exit "$EXIT_CODE"
           fi
       - name: Refresh lockfile self-entry
         if: steps.bump.outputs.bumped == 'true'
         working-directory: python
+        env:
+          TAG: python-v${{ steps.bump.outputs.version }}
         run: |
           uv lock
           if ! git diff --quiet uv.lock; then
             git add uv.lock
             git commit --amend --no-edit
-            git tag -f "python-v${{ steps.bump.outputs.version }}" HEAD
+            git tag --force "$TAG" HEAD
           fi
-      - name: Push tag back
-        if: steps.bump.outputs.bumped == 'true'
+      - name: Find unfinished release
+        id: unreleased
+        if: steps.bump.outputs.bumped == 'false'
+        working-directory: python
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_PREFIX: python-v
         run: |
-          git pull --rebase origin main
-          git push origin main --tags
+          version=$(cz version --project)
+          tag="${TAG_PREFIX}${version}"
+          if ! sha=$(git rev-parse --quiet --verify "refs/tags/${tag}^{commit}"); then
+            echo "::notice::No tag ${tag}; nothing to release"
+            exit 0
+          fi
+          release_draft=$(gh api graphql \
+            -f query="query(\$owner: String!, \$name: String!, \$tag: String!) { repository(owner: \$owner, name: \$name) { release(tagName: \$tag) { isDraft } } }" \
+            -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" -f tag="$tag" \
+            --jq .data.repository.release.isDraft)
+          if [ -n "$release_draft" ]; then
+            exit 0
+          fi
+          echo "::notice::${tag} has no GitHub Release; completing its release at ${sha}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+      - name: Bundle bump commit and tag
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          TAG: python-v${{ steps.bump.outputs.version }}
+        run: git bundle create "$RUNNER_TEMP/release.bundle" "refs/tags/$TAG"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.bump.outputs.bumped == 'true'
+        with:
+          name: release-bundle
+          path: ${{ runner.temp }}/release.bundle
+          if-no-files-found: error
+          retention-days: 1
 
-  release-python:
-    needs: bump-and-tag
-    if: needs.bump-and-tag.outputs.bumped == 'true'
+  push:
+    needs: bump
+    if: needs.bump.outputs.bumped == 'true'
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      contents: write
-      id-token: write
+    environment: release
+    permissions: {}
+    outputs:
+      pushed: ${{ steps.push.outputs.pushed }}
+      sha: ${{ steps.push.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          ref: python-v${{ needs.bump-and-tag.outputs.version }}
-      - uses: astral-sh/setup-uv@v4
+          name: release-bundle
+          path: ${{ runner.temp }}/bundle
+      - name: Mint release bot token
+        id: release-bot-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          version: "0.5.x"
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-actions: write
+      - name: Push bump commit and tag
+        id: push
+        env:
+          RELEASE_BOT_TOKEN: ${{ steps.release-bot-token.outputs.token }}
+          VERSION: ${{ needs.bump.outputs.version }}
+          BASE: ${{ needs.bump.outputs.base }}
+          WORKFLOW_FILE: publish-python.yaml
+          TAG_PREFIX: python-v
+          ALLOWED_PATHS: python/CHANGELOG.md python/pyproject.toml python/uv.lock
+        run: |
+          set -eu
+          if ! printf '%s' "$VERSION" | grep -Eqx '[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::Invalid version '${VERSION}'"
+            exit 1
+          fi
+          tag="${TAG_PREFIX}${VERSION}"
+          remote="https://github.com/${GITHUB_REPOSITORY}.git"
+
+          git init --quiet "$RUNNER_TEMP/release"
+          cd "$RUNNER_TEMP/release"
+          git fetch --quiet "$RUNNER_TEMP/bundle/release.bundle" "refs/tags/${tag}:refs/tags/${tag}"
+          sha=$(git rev-parse "refs/tags/${tag}^{commit}")
+          if [ "$(git rev-parse "${sha}^")" != "$BASE" ]; then
+            echo "::error::${tag} is not a single commit on top of ${BASE}"
+            exit 1
+          fi
+          for path in $(git diff --name-only "$BASE" "$sha"); do
+            case " ${ALLOWED_PATHS} " in
+              *" ${path} "*) ;;
+              *) echo "::error::Bump commit touches unexpected path ${path}"; exit 1 ;;
+            esac
+          done
+
+          authorization=$(printf 'x-access-token:%s' "$RELEASE_BOT_TOKEN" | base64 -w0)
+          echo "::add-mask::${authorization}"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic ${authorization}"
+
+          if git push --atomic "$remote" "${sha}:refs/heads/main" "refs/tags/${tag}"; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          remote_line=$(git ls-remote "$remote" refs/heads/main)
+          remote_main=$(printf '%s' "$remote_line" | cut -f1)
+          if [ -z "$remote_main" ] || [ "$remote_main" = "$BASE" ]; then
+            echo "::error::Push of ${tag} rejected while main is still at ${BASE}; see git's error above"
+            exit 1
+          fi
+          GH_TOKEN="$RELEASE_BOT_TOKEN" gh workflow run "$WORKFLOW_FILE" --repo "$GITHUB_REPOSITORY" --ref main
+          echo "::notice::main moved from ${BASE} to ${remote_main} during this run, so ${tag} was not released. Dispatched a new Publish Python run on main, which bumps from the latest main."
+          echo "pushed=false" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: [bump, push]
+    if: ${{ !cancelled() && needs.bump.result == 'success' && (needs.push.outputs.pushed == 'true' || needs.bump.outputs.unreleased-sha != '') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.push.outputs.sha || needs.bump.outputs.unreleased-sha }}
+          persist-credentials: false
+      - name: Verify tag points at the pushed commit
+        env:
+          TAG: python-v${{ needs.bump.outputs.version }}
+          SHA: ${{ needs.push.outputs.sha || needs.bump.outputs.unreleased-sha }}
+        run: |
+          git fetch --quiet --depth=1 origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          if [ "$(git rev-parse "refs/tags/${TAG}^{commit}")" != "$SHA" ]; then
+            echo "::error::${TAG} does not point at the pushed commit ${SHA}"
+            exit 1
+          fi
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.20"
+          enable-cache: false
       - run: uv python install 3.13
-      - uses: arduino/setup-task@v2
+      - uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+        with:
+          version: 3.49.1
       - name: Build
         working-directory: python
         run: |
           uv sync --frozen
           task build
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          packages-dir: python/dist/
-      - name: GitHub Release
-        uses: softprops/action-gh-release@v2
+          name: python-dist
+          path: python/dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-pypi:
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          tag_name: python-v${{ needs.bump-and-tag.outputs.version }}
-          name: pragmatiks-lint v${{ needs.bump-and-tag.outputs.version }}
-          files: |
-            python/dist/*.tar.gz
-            python/dist/*.whl
-          generate_release_notes: true
+          name: python-dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          skip-existing: true
+
+  github-release:
+    needs: [bump, publish-pypi]
+    if: ${{ !cancelled() && needs.publish-pypi.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: python-dist
+          path: dist/
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.bump.outputs.version }}
+        run: |
+          tag="python-v${VERSION}"
+          release_draft=$(gh api graphql \
+            -f query="query(\$owner: String!, \$name: String!, \$tag: String!) { repository(owner: \$owner, name: \$name) { release(tagName: \$tag) { isDraft } } }" \
+            -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" -f tag="$tag" \
+            --jq .data.repository.release.isDraft)
+          if [ -z "$release_draft" ]; then
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "pragmatiks-lint v${VERSION}" --generate-notes
+          fi
+          gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.tar.gz dist/*.whl
