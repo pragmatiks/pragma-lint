@@ -12,3 +12,9 @@ js/node_modules/
 js/dist/
 js/src/semgrep-rules/
 js/*.tgz
+
+# mise ceiling written by task install (per-machine, not committed)
+/.miserc.toml
+
+# mise lock sidecars (committed)
+!/.mise/locks/

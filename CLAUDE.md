@@ -23,10 +23,15 @@ Python and JS publish independently through separate workflows. Shared `rules/` 
 
 ## Development
 
+mise is the only toolchain source: `mise.toml` pins python, node, pnpm, task, uv, pre-commit, commitizen and yq; `aqua:npm/cli` stays first so its npm precedes node's on PATH. `mise.lock` and `.mise/locks/` lock them for macOS arm64 and Linux x64. On a fresh clone run `mise trust && mise install` first (task comes from mise), then `task install`.
+
 Use Taskfile commands:
 
 | Command | Purpose |
 |---------|---------|
+| `task install` | Install the locked toolchain, Python and JS dependencies and the pre-commit hook |
+| `task check` | Run Python and JS checks |
+| `task lock:toolchain` | Re-lock the toolchain after editing `mise.toml` (needs mise at `MISE_VERSION_PIN`) |
 | `task python:install` | Install Python dependencies |
 | `task python:check` | Ruff and mypy |
 | `task python:test` | Python rule smoke tests, comment-check tests and source-check tests |
