@@ -35,7 +35,7 @@ tasks:
     cmd: pnpm build
 
   pack:
-    desc: Pack the committed HEAD with CI's toolchain (Node 26, pnpm 12.6.0, latest npm) in a throwaway worktree, leaving this checkout's node_modules untouched
+    desc: Pack the committed HEAD with CI's toolchain (Node 26, pnpm 12.6.0, npm 12.2.0) in a throwaway worktree, leaving this checkout's node_modules untouched
     vars:
       CI_TOOLCHAIN: mise exec node@26 pnpm@12.6.0 --
       PACK_ROOT:
@@ -48,7 +48,7 @@ tasks:
       - "{{.CI_TOOLCHAIN}} pnpm -v"
       - '{{.CI_TOOLCHAIN}} pnpm --dir "{{.CHECKOUT}}/js" install --frozen-lockfile'
       - '{{.CI_TOOLCHAIN}} task --dir "{{.CHECKOUT}}/js" build'
-      - '{{.CI_TOOLCHAIN}} npx --yes --package npm@latest --call ''npm -v && npm pack "{{.CHECKOUT}}/js" --pack-destination "{{.TASKFILE_DIR}}"'''
+      - '{{.CI_TOOLCHAIN}} npx --yes --package npm@12.2.0 --call ''npm -v && npm pack "{{.CHECKOUT}}/js" --pack-destination "{{.TASKFILE_DIR}}"'''
 
   publish:
     desc: Publish to npm registry
