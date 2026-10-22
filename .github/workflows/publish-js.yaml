@@ -208,7 +208,7 @@ jobs:
         working-directory: js
         run: |
           pnpm install --frozen-lockfile
-          task build
+          mise run js:build
       - name: Publish to npm
         working-directory: js
         env:

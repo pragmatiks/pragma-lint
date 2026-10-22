@@ -13,18 +13,18 @@ The CLI surface belongs in `pragma-cli`.
 
 ## Development
 
-Use top-level Taskfile orchestration:
+Use the top-level mise tasks:
 
 ```bash
-task all:install
-task python:install
-task python:test
-task js:install
-task js:test
-task all:check
-task all:build
+mise run all:install
+mise run python:install
+mise run python:test
+mise run js:install
+mise run js:test
+mise run all:check
+mise run all:build
 ```
 
-`task all:install` installs both packages' dependencies and the repository's pre-commit hook.
+`mise run all:install` installs both packages' dependencies and the repository's pre-commit hook.
 
 `rules/*.yml` is the source of truth. Build tasks vendor those files into each package artifact and the vendored copies are ignored by git.

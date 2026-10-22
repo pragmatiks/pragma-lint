@@ -1,0 +1,42 @@
+["python:vendor-rules"]
+description = "Vendor shared semgrep rules into the Python package"
+extends = "bash"
+dir = "python"
+run = [
+  "rm -rf src/pragmatiks_lint/semgrep_rules",
+  "mkdir -p src/pragmatiks_lint/semgrep_rules",
+  "cp ../rules/*.yml src/pragmatiks_lint/semgrep_rules/",
+]
+
+["python:format"]
+description = "Format Python code with ruff"
+extends = "bash"
+dir = "python"
+run = [
+  "uv run ruff format .",
+  "uv run ruff check --fix .",
+]
+
+["python:check"]
+description = "Check Python code with ruff and mypy"
+extends = "bash"
+dir = "python"
+depends = ["python:vendor-rules"]
+run = [
+  "uv run ruff check .",
+  "uv run mypy",
+]
+
+["python:test"]
+description = "Run Python rule smoke tests, comment-check tests and source-check tests"
+extends = "bash"
+dir = "python"
+depends = ["python:vendor-rules"]
+run = "uv run pytest"
+
+["python:build"]
+description = "Build wheel and sdist"
+extends = "bash"
+dir = "python"
+depends = ["python:vendor-rules"]
+run = "uv build"

@@ -142,7 +142,7 @@ Fix these by rewriting the code:
 
 ## Development
 
-| Command                                            | Purpose                                                                                                                                                                                        |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `task js:check` / `task js:test` / `task js:build` | Lint and type check / tests (Node `>=22.15` for `module.registerHooks`; `mise.toml` pins Node 26) / build                                                                                      |
-| `task js:pack`                                     | Install, build and `npm pack` the committed HEAD as CI publishes it, with the mise-locked node, pnpm and npm, in a throwaway worktree, printing all three versions; the tarball lands in `js/` |
+| Command                                                        | Purpose                                                                                                                                                                                        |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mise run js:check` / `mise run js:test` / `mise run js:build` | Lint and type check / tests (Node `>=22.15` for `module.registerHooks`; `mise.toml` pins Node 26) / build                                                                                      |
+| `mise run js:pack`                                             | Install, build and `npm pack` the committed HEAD as CI publishes it, with the mise-locked node, pnpm and npm, in a throwaway worktree, printing all three versions; the tarball lands in `js/` |
