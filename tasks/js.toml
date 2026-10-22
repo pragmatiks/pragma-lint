@@ -2,7 +2,11 @@
 description = "Vendor shared semgrep rules into the npm package"
 extends = "bash"
 dir = "js"
-run = ["rm -rf src/semgrep-rules", "mkdir -p src/semgrep-rules", "cp ../rules/*.yml src/semgrep-rules/"]
+run = [
+  "rm -rf src/semgrep-rules",
+  "mkdir -p src/semgrep-rules",
+  "cp ../rules/*.yml src/semgrep-rules/",
+]
 
 ["js:format"]
 description = "Format TypeScript code"

@@ -2,15 +2,15 @@
 set -euo pipefail
 
 pin=$(sed -n 's/^min_version = "\(.*\)"$/\1/p' mise.toml)
-test -n "$pin" || {
+if [ -z "$pin" ]; then
   echo "mise.toml sets no min_version." >&2
   exit 1
-}
+fi
 
-test "$(mise --version | cut -d' ' -f1)" = "$pin" || {
+if [ "$(mise --version | cut -d' ' -f1)" != "$pin" ]; then
   echo "mise must be exactly $pin. Run 'mise self-update $pin'." >&2
   exit 1
-}
+fi
 
 case "$(uname -sm)" in
   "Darwin arm64" | "Linux x86_64") ;;
