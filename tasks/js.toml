@@ -1,0 +1,40 @@
+["js:vendor-rules"]
+description = "Vendor shared semgrep rules into the npm package"
+extends = "bash"
+dir = "js"
+run = [
+  "rm -rf src/semgrep-rules",
+  "mkdir -p src/semgrep-rules",
+  "cp ../rules/*.yml src/semgrep-rules/",
+]
+
+["js:format"]
+description = "Format TypeScript code"
+extends = "bash"
+dir = "js"
+run = "pnpm format"
+
+["js:check"]
+description = "Lint and type check"
+extends = "bash"
+dir = "js"
+depends = ["js:vendor-rules"]
+run = "pnpm check"
+
+["js:test"]
+description = "Run JS tests"
+extends = "bash"
+dir = "js"
+depends = ["js:vendor-rules"]
+run = "pnpm test"
+
+["js:build"]
+description = "Build distribution"
+extends = "bash"
+dir = "js"
+depends = ["js:vendor-rules"]
+run = "pnpm build"
+
+["js:pack"]
+description = "Build and npm pack the committed HEAD into js/ as CI publishes it, without touching this checkout's node_modules"
+file = "scripts/tasks/js_pack.sh"

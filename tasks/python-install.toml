@@ -1,0 +1,16 @@
+["python:install"]
+description = "Install Python dependencies"
+extends = "bash"
+dir = "python"
+sources = [
+  "pyproject.toml",
+  "uv.lock",
+  "{{config_root}}/mise.toml",
+  "{{config_root}}/mise.lock",
+]
+outputs = [".venv/.install-complete"]
+run = [
+  "rm -f .venv/.install-complete",
+  "uv sync --all-groups --locked",
+  "touch .venv/.install-complete",
+]

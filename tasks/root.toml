@@ -1,0 +1,43 @@
+[install]
+description = "Install the locked toolchain, then Python and JS dependencies and the pre-commit hook"
+extends = "bash"
+run = [
+  { task = "install:mise-ceiling" },
+  "mise install",
+  { task = "all:install" },
+]
+
+["install:mise-ceiling"]
+description = "Write the gitignored .miserc.toml that keeps mise in .claude/worktrees checkouts from loading the primary checkout's config"
+file = "scripts/tasks/install_mise_ceiling.sh"
+
+["install:hooks"]
+description = "Install the pre-commit git hook into the shared hooks directory"
+file = "scripts/tasks/install_hooks.sh"
+
+["lock:toolchain"]
+description = "Re-resolve mise.lock and .mise/locks/ for macOS arm64 and Linux x64 without bumping any tool; needs mise at the min_version in mise.toml"
+file = "scripts/tasks/lock_toolchain.sh"
+
+["all:install"]
+description = "Install Python and JS dependencies and the pre-commit hook"
+extends = "bash"
+depends = ["python:install", "js:install"]
+run = [{ task = "install:hooks" }]
+
+["all:format"]
+description = "Format Python and JS packages"
+depends = ["python:format", "js:format"]
+
+["all:check"]
+description = "Run Python and JS checks"
+alias = "check"
+depends = ["python:check", "js:check"]
+
+["all:test"]
+description = "Run Python and JS tests"
+depends = ["python:test", "js:test"]
+
+["all:build"]
+description = "Build Python and JS package artifacts"
+depends = ["python:build", "js:build"]

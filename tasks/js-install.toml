@@ -1,0 +1,17 @@
+["js:install"]
+description = "Install JS dependencies"
+extends = "bash"
+dir = "js"
+sources = [
+  "package.json",
+  "pnpm-lock.yaml",
+  "pnpm-workspace.yaml",
+  "{{config_root}}/mise.toml",
+  "{{config_root}}/mise.lock",
+]
+outputs = ["node_modules/.install-complete"]
+run = [
+  "rm -f node_modules/.install-complete",
+  "pnpm install --frozen-lockfile",
+  "touch node_modules/.install-complete",
+]

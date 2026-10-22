@@ -23,30 +23,29 @@ Python and JS publish independently through separate workflows. Shared `rules/` 
 
 ## Development
 
-mise is the only toolchain source: `mise.toml` pins python, node, pnpm, task, uv, pre-commit, commitizen and yq; `aqua:npm/cli` stays first so its npm precedes node's on PATH. `mise.lock` and `.mise/locks/` lock them for macOS arm64 and Linux x64. On a fresh clone run `mise trust && mise install` first (task comes from mise), then `task install`.
+mise is the only toolchain source: `mise.toml` pins python, node, pnpm, uv, pre-commit, commitizen and yq; `aqua:npm/cli` stays first so its npm precedes node's on PATH. `mise.lock` and `.mise/locks/` lock them for macOS arm64 and Linux x64. On a fresh clone run `mise trust`, then `mise run install`.
 
-Use Taskfile commands:
+Use mise tasks (`mise tasks` lists them all):
 
 | Command | Purpose |
 |---------|---------|
-| `task install` | Install the locked toolchain, Python and JS dependencies and the pre-commit hook |
-| `task check` | Run Python and JS checks |
-| `task lock:toolchain` | Re-lock the toolchain after editing `mise.toml` (needs mise at `MISE_VERSION_PIN`) |
-| `task python:install` | Install Python dependencies |
-| `task python:check` | Ruff and mypy |
-| `task python:test` | Python rule smoke tests, comment-check tests and source-check tests |
-| `task python:build` | Build wheel and sdist |
-| `task js:install` | Install JS dependencies |
-| `task js:check` | ESLint and TypeScript |
-| `task js:test` | Vitest integration tests (Node >=22.15) |
-| `task js:build` | Build npm dist |
-| `task js:pack` | Pack the committed HEAD as an npm tarball with the CI publish toolchain (commit first) |
-| `task all:install` | Install Python and JS dependencies and the pre-commit hook |
-| `task all:check` | Run all checks |
+| `mise run install` | Install the locked toolchain, Python and JS dependencies and the pre-commit hook |
+| `mise run lock:toolchain` | Re-lock the toolchain after editing `mise.toml` (needs mise at the `min_version` in `mise.toml`) |
+| `mise run python:install` | Install Python dependencies |
+| `mise run python:check` | Ruff and mypy |
+| `mise run python:test` | Python rule smoke tests, comment-check tests and source-check tests |
+| `mise run python:build` | Build wheel and sdist |
+| `mise run js:install` | Install JS dependencies |
+| `mise run js:check` | ESLint and TypeScript |
+| `mise run js:test` | Vitest integration tests (Node >=22.15) |
+| `mise run js:build` | Build npm dist |
+| `mise run js:pack` | Pack the committed HEAD as an npm tarball with the CI publish toolchain (commit first) |
+| `mise run all:install` | Install Python and JS dependencies and the pre-commit hook |
+| `mise run all:check` (alias `mise run check`) | Run all checks |
 
 ## Testing
 
-Run `task python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments` and `pragmatiks_lint.sources` check tests, and `task js:test` for eslint config integration coverage. This repository has no e2e suite.
+Run `mise run python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments` and `pragmatiks_lint.sources` check tests, and `mise run js:test` for eslint config integration coverage. This repository has no e2e suite.
 
 ## Dependency Policy
 
@@ -133,7 +132,7 @@ This section is an embedded copy of the pragma-os repo's `docs/engineering-princ
 
 | Layer | What | Where |
 |---|---|---|
-| 1. Style + standard smells | `ruff` (Python), `eslint` (TS) with curated rule set | per-repo `task check` / `pnpm lint` |
+| 1. Style + standard smells | `ruff` (Python), `eslint` (TS) with curated rule set | per-repo `mise run check` / `pnpm lint` |
 | 2. Complexity gating | `radon` / `xenon` (Python), `eslint-plugin-sonarjs/cognitive-complexity` (TS) | CI fail on regression |
 | 3. Pragmatiks-specific rules | `semgrep` ruleset (cross-language) + custom scripts | shared via `pragmatiks-lint` (PyPI) and `@pragmatiks/lint` (npm) |
 
@@ -272,7 +271,7 @@ Provider event `on_delete` stays (provider deletes external object).
 **Programmatic check**:
 - `eslint-plugin-unicorn/prevent-abbreviations` (TS) — direct fit, allowlist config.
 - `pra-no-abbreviations-python` semgrep rule (Python) — regex matching forbidden short identifiers, allowlist.
-- `packages/api/scripts/check_openapi_spec.py` (`task api:check`) — flags infrastructure terms in generated OpenAPI spec. Kubernetes, pod, namespace, and vendor names not in term list yet — reviewer scans for them.
+- `packages/api/scripts/check_openapi_spec.py` (`mise run api:check`) — flags infrastructure terms in generated OpenAPI spec. Kubernetes, pod, namespace, and vendor names not in term list yet — reviewer scans for them.
 
 **Reviewer hint**: `db`, `cfg`, `k8s` in any new code = blocker. Banned synonym from vocabulary table on any surface = blocker.
 
