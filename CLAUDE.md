@@ -51,6 +51,15 @@ Run `mise run python:test` for Python semgrep smoke coverage and the `pragmatiks
 
 Keep both packages library-only; `python -m pragmatiks_lint.comments` and `python -m pragmatiks_lint.sources` are the two sanctioned module entries (pre-commit hook targets; they need `pragmatiks-lint` installed). CLI dependencies belong in `pragma-cli`, not here. JS uses peer dependencies for eslint ecosystem packages consumed by exported config, and dev dependencies for local tooling. Use registry-based dependencies only; do not commit editable sibling overrides. `pragmatiks_lint.sources` enforces that rule in every Pragmatiks repository that installs its hook: committed `tool.uv.sources` paths, uv workspace members, ty `extra-paths`, `package.json` path specs and `pnpm-workspace.yaml` packages, catalogs and overrides must resolve inside the repository.
 
+## Delivery
+
+Canonical: pragma-kit `project-instructions.md` (Delivery, Cloud threads). In short:
+
+- **Land it** by default: commit, push, open the pull request, and rebase-merge it once CI and review are clean.
+- **PR it** (push, open the pull request, stop) only when the work departs from the agreed plan: an architecture change, a new pattern, a new library, or a changed design decision. Name the departure and wait for the founder. The founder saying "PR it" or "land it" sets the mode for that task.
+- Branch from the latest `origin/main` as `<feat|fix|chore>/PRA-<n>_<snake_case_summary>`; the branch is deleted on merge.
+- Commits carry the founder's git identity, with no `Co-Authored-By`, `Claude-Session` or other Claude trailers.
+
 ## Evidence-based development
 
 Fact-check with live lookups before writing code. The cost of a query is far less than a debugging cycle on stale assumptions.
