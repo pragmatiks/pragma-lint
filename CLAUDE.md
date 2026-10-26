@@ -19,7 +19,7 @@ Python and JS publish independently through separate workflows. Shared `rules/` 
 
 - Library-only: no Python `[project.scripts]` entry and no npm `bin` field. The two sanctioned module entries are pre-commit hook targets: `python -m pragmatiks_lint.comments` and `python -m pragmatiks_lint.sources`. `comments.py` and the shared `report.py` import only the standard library and `sources.py` adds PyYAML, a declared runtime dependency; `-m` still imports the package `__init__` and its dependencies.
 - Build tasks vendor `rules/*.yml` into package-local ignored directories.
-- Do not push remotes or publish packages from this repository without explicit authorization.
+- Do not publish packages from this repository without explicit authorization; pushes and pull requests follow Delivery.
 
 ## Development
 
