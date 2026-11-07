@@ -50,9 +50,14 @@ def check(paths: PathsArgument, language: LanguageOption = "all") -> None:
     """Run lint rules against the given paths.
 
     Raises:
-        typer.Exit: With status 1 when blocking findings exist.
+        typer.Exit: With status 1 when blocking findings exist or semgrep is missing or fails.
     """
-    findings = run_check(paths, language=language)
+    try:
+        findings = run_check(paths, language=language)
+    except RuntimeError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+
     if not findings:
         console.print("[green]No findings.[/green]")
         raise typer.Exit(0)

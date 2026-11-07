@@ -764,6 +764,10 @@ version = "0.8.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+check = [
     { name = "rich" },
     { name = "semgrep" },
     { name = "typer" },
@@ -780,10 +784,11 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.0" },
-    { name = "rich", specifier = ">=13.9.0" },
-    { name = "semgrep", specifier = ">=1.145.0" },
-    { name = "typer", specifier = ">=0.15.3" },
+    { name = "rich", marker = "extra == 'check'", specifier = ">=13.9.0" },
+    { name = "semgrep", marker = "extra == 'check'", specifier = ">=1.145.0" },
+    { name = "typer", marker = "extra == 'check'", specifier = ">=0.15.3" },
 ]
+provides-extras = ["check"]
 
 [package.metadata.requires-dev]
 dev = [

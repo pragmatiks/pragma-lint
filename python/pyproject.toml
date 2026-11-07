@@ -6,15 +6,19 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "PyYAML>=6.0.0",
-    "rich>=13.9.0",
-    "semgrep>=1.145.0",
-    "typer>=0.15.3",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+check = [
+    "rich>=13.9.0",
+    "semgrep>=1.145.0",
+    "typer>=0.15.3",
 ]
 
 [dependency-groups]
