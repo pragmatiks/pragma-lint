@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.8.0 (2026-11-07)
+
+### Features
+
+- **rules**: flag pure-prefixed functions that perform I/O (PRA-453, PRA-750)
+
 ## python-v0.7.0 (2026-10-20)
 
 ### Features
