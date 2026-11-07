@@ -1,0 +1,78 @@
+rules:
+  - id: pra-pure-prefix-mismatch
+    patterns:
+      - pattern-either:
+          - pattern: |
+              def $NAME(...):
+                  ...
+          - pattern: |
+              async def $NAME(...):
+                  ...
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '^(compute|build|derive|format|parse|extract)_.*'
+      - pattern-either:
+          - pattern-inside: |
+              def $NAME(...):
+                  ...
+                  $IO
+                  ...
+          - pattern-inside: |
+              async def $NAME(...):
+                  ...
+                  $IO
+                  ...
+      - metavariable-pattern:
+          metavariable: $IO
+          pattern-either:
+            - pattern: open(...)
+            - pattern: $PATH.open(...)
+            - patterns:
+                - pattern-either:
+                    - pattern: httpx.$METHOD(...)
+                    - pattern: requests.$METHOD(...)
+                - metavariable-regex:
+                    metavariable: $METHOD
+                    regex: '^(get|post|put|patch|delete|head|options|request|stream)$'
+            - pattern: $PATH.read_text(...)
+            - pattern: $PATH.read_bytes(...)
+            - pattern: $PATH.write_text(...)
+            - pattern: $PATH.write_bytes(...)
+            - pattern: $PATH.unlink(...)
+            - pattern: $PATH.mkdir(...)
+            - pattern: $PATH.exists(...)
+            - pattern: $PATH.iterdir(...)
+            - pattern: $PATH.glob(...)
+            - pattern: $PATH.rmdir(...)
+            - pattern: $PATH.resolve(...)
+            - pattern: shutil.$METHOD(...)
+            - pattern: subprocess.$METHOD(...)
+            - pattern: importlib.import_module(...)
+            - patterns:
+                - pattern: os.$METHOD(...)
+                - metavariable-regex:
+                    metavariable: $METHOD
+                    regex: '^(mkdir|makedirs|rmdir|removedirs|remove|unlink|rename|replace|kill|chdir|chmod|chown|symlink|link|stat|lstat|listdir|scandir|access|system|popen)$'
+            - patterns:
+                - pattern: os.path.$METHOD(...)
+                - metavariable-regex:
+                    metavariable: $METHOD
+                    regex: '^(exists|isfile|isdir|islink|getsize|realpath)$'
+            - patterns:
+                - pattern: $CLIENT.$METHOD(...)
+                - metavariable-regex:
+                    metavariable: $CLIENT
+                    regex: '(database|session|connection|cursor|client)$'
+                - metavariable-regex:
+                    metavariable: $METHOD
+                    regex: '^(execute|fetch|get|post|put|delete|query|read|write|save)$'
+            - patterns:
+                - pattern: $CALLEE(...)
+                - metavariable-regex:
+                    metavariable: $CALLEE
+                    regex: '^(fetch|retrieve|load|save|read|write|query)_\w+$'
+    message: "principle #7 pure-prefixed function appears to perform I/O. Rename it with get, fetch, retrieve, load, save, read, write, or query, or move the I/O to the caller."
+    severity: WARNING
+    languages: [python]
+    metadata:
+      note: "Heuristic rule; detects I/O written in the body, or a call to a bare function named with an I/O prefix other than get. I/O hidden behind other helpers is not seen. The I/O vocabulary mirrors pra-io-prefix-mismatch in opposite polarity; keep both rules in step."

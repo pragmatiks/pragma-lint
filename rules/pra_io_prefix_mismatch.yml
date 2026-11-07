@@ -106,6 +106,16 @@ rules:
       - pattern-not: |
           def $NAME(...):
               ...
+              $PATH.resolve(...)
+              ...
+      - pattern-not: |
+          def $NAME(...):
+              ...
+              importlib.import_module(...)
+              ...
+      - pattern-not: |
+          def $NAME(...):
+              ...
               shutil.$METHOD(...)
               ...
       - pattern-not: |
@@ -113,10 +123,10 @@ rules:
               ...
               subprocess.$METHOD(...)
               ...
-      - pattern-not-regex: '(?s)\bos\.(mkdir|makedirs|rmdir|removedirs|remove|unlink|rename|replace|kill|chdir|chmod|chown|symlink|link|stat|lstat|listdir|scandir|access|system|popen|path\.(exists|isfile|isdir|islink|getsize))\('
+      - pattern-not-regex: '(?s)\bos\.(mkdir|makedirs|rmdir|removedirs|remove|unlink|rename|replace|kill|chdir|chmod|chown|symlink|link|stat|lstat|listdir|scandir|access|system|popen|path\.(exists|isfile|isdir|islink|getsize|realpath))\('
       - pattern-not-regex: '(?s)(database|session|connection|cursor|client)\.(execute|fetch|get|post|put|delete|query|read|write|save)\('
     message: "principle #7 I/O-prefixed function appears pure. Rename it with compute, build, derive, format, or parse."
     severity: WARNING
     languages: [python]
     metadata:
-      note: "Heuristic rule; false positives are expected for hidden I/O wrappers."
+      note: "Heuristic rule; false positives are expected for hidden I/O wrappers. The I/O vocabulary mirrors pra-pure-prefix-mismatch in opposite polarity; keep both rules in step."
