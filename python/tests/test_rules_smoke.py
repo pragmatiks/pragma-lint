@@ -11,6 +11,23 @@ from pragmatiks_lint import list_rules, run_check
 from pragmatiks_lint._rules import bundled_rules_directory
 
 
+def find_rule_lines(fixture_name: str, rule_id: str) -> set[int]:
+    """Return the lines where a rule fires on a fixture.
+
+    Args:
+        fixture_name: File name under the fixtures directory.
+        rule_id: Rule ID to keep.
+
+    Returns:
+        Start lines of the rule's findings.
+    """
+    fixture_path = Path(__file__).parent / "fixtures" / fixture_name
+    findings = run_check([fixture_path])
+    return {
+        finding.line for finding in findings if finding.rule_id == rule_id or finding.rule_id.endswith(f".{rule_id}")
+    }
+
+
 RuleCase = tuple[str, str]
 
 RULE_CASES: tuple[RuleCase, ...] = (
@@ -22,16 +39,14 @@ RULE_CASES: tuple[RuleCase, ...] = (
     ("pra-no-todo-comments-js", "todo_violation.js"),
     ("pra-io-prefix-mismatch", "io_prefix_violation.py"),
     ("pra-env-read-deep", "env_read_violation.py"),
+    ("pra-pure-prefix-mismatch", "pure_prefix_mismatch_violation.py"),
 )
 
 
 @pytest.mark.parametrize(("rule_id", "fixture_name"), RULE_CASES)
 def test_rule_fires(rule_id: str, fixture_name: str) -> None:
     """Run each rule against its canonical violation fixture."""
-    fixture_path = Path(__file__).parent / "fixtures" / fixture_name
-    findings = run_check([fixture_path])
-    rule_ids = {finding.rule_id for finding in findings}
-    assert any(item == rule_id or item.endswith(f".{rule_id}") for item in rule_ids)
+    assert find_rule_lines(fixture_name, rule_id)
 
 
 def test_srp_js_boundaries_ignore_words() -> None:
@@ -45,20 +60,14 @@ IO_PREFIX_NON_VIOLATION_FIXTURES: tuple[str, ...] = (
     "io_prefix_builtin_open_non_violation.py",
     "io_prefix_pathlib_non_violation.py",
     "io_prefix_subprocess_non_violation.py",
+    "io_prefix_resolution_non_violation.py",
 )
 
 
 @pytest.mark.parametrize("fixture_name", IO_PREFIX_NON_VIOLATION_FIXTURES)
 def test_io_prefix_recognizes_hidden_io(fixture_name: str) -> None:
-    """Verify builtin open, pathlib, subprocess, and shutil idioms are recognized as I/O."""
-    fixture_path = Path(__file__).parent / "fixtures" / fixture_name
-    findings = run_check([fixture_path], language="python")
-    io_prefix_findings = [
-        finding
-        for finding in findings
-        if finding.rule_id == "pra-io-prefix-mismatch" or finding.rule_id.endswith(".pra-io-prefix-mismatch")
-    ]
-    assert io_prefix_findings == []
+    """Verify file, pathlib, subprocess, shutil, path resolution and module import idioms count as I/O."""
+    assert find_rule_lines(fixture_name, "pra-io-prefix-mismatch") == set()
 
 
 def test_list_rules_matches_yaml_rule_ids() -> None:
@@ -70,3 +79,13 @@ def test_list_rules_matches_yaml_rule_ids() -> None:
             expected_rule_ids.update(rule["id"] for rule in payload["rules"])
 
     assert set(list_rules()) == expected_rule_ids
+
+
+def test_pure_prefix_mismatch_flags_every_io_function() -> None:
+    """Verify every pure-prefixed function performing I/O in the violation fixture is flagged."""
+    assert find_rule_lines("pure_prefix_mismatch_violation.py", "pra-pure-prefix-mismatch") == {12, 16, 21, 26}
+
+
+def test_pure_prefix_mismatch_ignores_pure_functions() -> None:
+    """Verify pure-prefixed functions without I/O, including one awaiting a coroutine, are not flagged."""
+    assert find_rule_lines("pure_prefix_mismatch_non_violation.py", "pra-pure-prefix-mismatch") == set()
