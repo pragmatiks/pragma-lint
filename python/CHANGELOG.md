@@ -8,6 +8,17 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.9.0 (2026-11-07)
+
+### Bug Fixes
+
+- **python**: reject PEP 508 path direct references outside the repository (PRA-745)
+
+### Features
+
+- **python**: move semgrep, typer and rich behind the check extra (PRA-683)
+- **python**: add the check-uv-pip hook rejecting uv pip in tracked files (PRA-744)
+
 ## python-v0.8.0 (2026-11-07)
 
 ### Features
