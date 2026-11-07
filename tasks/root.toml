@@ -41,3 +41,17 @@ depends = ["python:test", "js:test"]
 ["all:build"]
 description = "Build Python and JS package artifacts"
 depends = ["python:build", "js:build"]
+
+["check:pre-commit"]
+description = "Run every pre-commit stage hook on all files, as CI does"
+extends = "bash"
+run = "pre-commit run --all-files --show-diff-on-failure --hook-stage pre-commit"
+
+["check:ci"]
+description = "Run the CI gate: Python and JS checks, the pre-commit hooks, and the semgrep rule and lint-check tests"
+extends = "bash"
+run = [
+  { task = "all:check" },
+  { task = "check:pre-commit" },
+  { task = "all:test" },
+]
