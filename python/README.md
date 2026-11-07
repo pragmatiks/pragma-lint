@@ -33,13 +33,13 @@ The package also ships a strict no-comments check for Python files, run as a mod
       stages: [pre-commit]
 ```
 
-It also ships a dependency source check that rejects committed paths leaving the repository: `tool.uv.sources` entries other than workspace members and in-repository paths, `tool.uv.workspace` members and excludes, `tool.ty.environment.extra-paths` entries, PEP 508 direct references to a `file:` URL or bare path in `project.dependencies`, `project.optional-dependencies` and `dependency-groups` (`${PROJECT_ROOT}` expands to the manifest's directory), path specs (`file:`, `link:`, bare paths including `~/`) in `package.json` dependency fields, and `pnpm-workspace.yaml` packages, catalogs and overrides. It treats the working directory as the repository root, which is where pre-commit runs hooks:
+It also ships a dependency source check that rejects committed paths leaving the repository and dependencies that do not resolve from a registry: `tool.uv.sources` entries other than workspace members and in-repository paths, `tool.uv.workspace` members and excludes, `tool.ty.environment.extra-paths` entries, PEP 508 direct references to a `file:` URL or a location without a URL scheme (which uv reads as a path, so `vendor/pkg` as well as `./vendor/pkg`) in `project.dependencies`, `project.optional-dependencies`, `dependency-groups`, `tool.uv.dev-dependencies`, `tool.uv.override-dependencies`, `tool.uv.constraint-dependencies`, `tool.uv.build-constraint-dependencies` and `build-system.requires` (`${PROJECT_ROOT}` expands to the manifest's directory), PEP 508 direct references to any other URL in those lists (`https:`, `http:`, `git+https:`, `git+ssh:` and other VCS schemes), path specs (`file:`, `link:`, specs starting with `.`, `/` or `~/`, and, as npm reads them, other specs containing `/` or ending in `.tgz`, `.tar.gz` or `.tar`) in `package.json` dependency fields, and `pnpm-workspace.yaml` packages, catalogs and overrides, and in those `package.json` fields, catalogs and overrides any spec with a protocol other than `npm:`, `jsr:`, `workspace:` and `catalog:` (git, `github:` and other hosted git, `http:` and `https:` tarballs), an scp-style git location (`git@host:path`) or a GitHub shorthand (`owner/repository`). It treats the working directory as the repository root, which is where pre-commit runs hooks:
 
 ```yaml
 - repo: local
   hooks:
     - id: check-sources
-      name: Reject sibling path overrides
+      name: Reject non-registry dependency sources
       entry: python -m pragmatiks_lint.sources
       language: python
       language_version: python3.13

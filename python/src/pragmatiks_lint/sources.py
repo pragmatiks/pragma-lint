@@ -1,4 +1,4 @@
-"""Dependency source check for committed manifests: no declared path may leave the repository.
+"""Dependency source check: declared paths stay inside the repository and every dependency resolves from a registry.
 
 Run as ``python -m pragmatiks_lint.sources <manifest> ...`` from the repository root. The current working directory
 is the repository every declared path must stay inside. Checked declarations:
@@ -9,14 +9,23 @@ is the repository every declared path must stay inside. Checked declarations:
   ``tool.ty.environment.extra-paths`` entry must be inside the repository; a glob is judged with its wildcards
   taken literally, so ``packages/*`` passes and ``../*`` fails. uv takes ``~`` literally, so a uv source or
   workspace path starting with ``~/`` names a directory inside the manifest's directory. Each string requirement
-  in ``project.dependencies``, ``project.optional-dependencies`` and ``dependency-groups`` written as a PEP 508
-  direct reference (``name @ location``) to a ``file:`` URL or a bare path (``.``, ``..``, or starting with
-  ``./``, ``../`` or ``/``) must be inside the repository; ``${PROJECT_ROOT}`` expands to the manifest's absolute
-  directory, as uv expands it. Registry requirements, other URLs and ``include-group`` tables pass.
+  in ``project.dependencies``, ``project.optional-dependencies``, ``dependency-groups``,
+  ``tool.uv.dev-dependencies``, ``tool.uv.override-dependencies``, ``tool.uv.constraint-dependencies``,
+  ``tool.uv.build-constraint-dependencies`` and ``build-system.requires`` written as a PEP 508 direct reference
+  (``name @ location``) to a ``file:`` URL or to a location without a URL scheme, which uv reads as a path
+  relative to the manifest's directory (``vendor/pkg`` as well as ``./vendor/pkg``), must be inside the
+  repository; ``${PROJECT_ROOT}`` expands to the manifest's absolute directory, as uv expands it. A direct
+  reference to any other URL (``https:``, ``http:``, ``git+https:``, ``git+ssh:`` or any other scheme) is
+  rejected. Registry requirements and ``include-group`` tables pass.
 - ``package.json``: values in ``dependencies``, ``devDependencies``, ``optionalDependencies`` and
-  ``peerDependencies`` written as a ``file:`` or ``link:`` spec, or as a bare path (``.``, ``..``, or starting
-  with ``./``, ``../``, ``/`` or ``~/``), must be inside the repository; ``workspace:``, registry, alias and git
-  specs pass. A location starting with ``~/`` resolves against the home directory, as pnpm expands it.
+  ``peerDependencies`` written as a ``file:`` or ``link:`` spec, or as a bare path starting with ``.``, ``/`` or
+  ``~/``, must be inside the repository. Otherwise a spec with any other protocol than ``npm:``, ``jsr:``,
+  ``workspace:`` and ``catalog:`` (``git+https:``, ``git+ssh:``, ``github:``, ``https:`` and so on), an
+  scp-style git location (``git@host:path``) or a GitHub shorthand (``owner/repository``, optionally with
+  ``#reference``) is rejected, and any remaining spec that contains ``/`` or ends in ``.tgz``, ``.tar.gz`` or
+  ``.tar`` is a bare path, as npm reads it (``vendor/packages/lint``, ``@scope/name``, ``lint.tgz``), that must
+  be inside the repository. Registry ranges, tags and those four protocols pass. A location starting with ``~/``
+  resolves against the home directory, as pnpm expands it.
 - ``pnpm-workspace.yaml``: ``catalog``, every catalog under ``catalogs``, and ``overrides`` values, under the same
   rule as ``package.json``; each ``packages`` entry, with a leading ``!`` dropped, must be inside the repository
   under the same glob rule as the uv workspace members.
@@ -50,19 +59,24 @@ from pragmatiks_lint.report import print_report
 PACKAGE_DEPENDENCY_FIELDS = ("dependencies", "devDependencies", "optionalDependencies", "peerDependencies")
 PATH_PROTOCOLS = ("file:", "link:")
 HOME_PREFIX = "~/"
-BARE_PATH_PREFIXES = ("./", "../", "/", HOME_PREFIX)
-BARE_PATHS = frozenset({".", ".."})
+BARE_PATH_PREFIXES = (".", "/", HOME_PREFIX)
+PATH_SEPARATOR = "/"
+TARBALL_FILENAME_PATTERN = re.compile(r"\.(?:tgz|tar\.gz|tar)$", re.IGNORECASE)
 WORKSPACE_PACKAGE_NEGATION = "!"
 DIRECT_REFERENCE_PATTERN = re.compile(r"^\s*[A-Za-z0-9][A-Za-z0-9._-]*\s*(\[[^\]]*\])?\s*@\s*(?P<location>\S+)")
 FILE_URL_PROTOCOL = "file:"
-REQUIREMENT_BARE_PATH_PREFIXES = ("./", "../", "/")
 PROJECT_ROOT_VARIABLE = "${PROJECT_ROOT}"
+URL_SCHEME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+REGISTRY_PROTOCOLS = frozenset({"npm:", "jsr:", "workspace:", "catalog:"})
+SCP_GIT_LOCATION_PATTERN = re.compile(r"^[^\s/:@#]+@[^\s/:@#]+:")
+GITHUB_SHORTHAND_PATTERN = re.compile(r"^(?!\.)[^\s/:@#]+/[^\s/:@#]+(?:#.*)?$")
 POLICY_FOOTER = (
     "\n"
     "Dependency source check failed\n"
     "\n"
-    "Policy: every path a committed manifest declares must resolve inside the repository, and each\n"
-    "tool.uv.sources entry must be a workspace member or such a path. Never commit a path to a sibling checkout.\n"
+    "Policy: every dependency resolves from a registry. Every path a committed manifest declares must resolve\n"
+    "inside the repository, each tool.uv.sources entry must be a workspace member or such a path, and no\n"
+    "dependency may name a URL, git repository or tarball. Never commit a path to a sibling checkout.\n"
     "See docs/patterns/dependency-resolution.md in the pragma-os repository.\n"
 )
 
@@ -113,11 +127,32 @@ class RejectedSource:
         return f"{self.key_path} = {rendered_source} is neither a workspace member nor a path inside the repository"
 
 
-type Declaration = DeclaredPath | RejectedSource
+@dataclass(frozen=True)
+class RemoteReference:
+    """A dependency that names a URL, git repository or tarball instead of a registry release.
+
+    Attributes:
+        key_path: Dotted location of the dependency inside the manifest.
+        value: The dependency as written in the manifest.
+    """
+
+    key_path: str
+    value: str
+
+    def describe_violation(self) -> str:
+        """Describe this reference as a violation of the policy.
+
+        Returns:
+            The key path, the value as written, and why it fails.
+        """
+        return f"{self.key_path} = {json.dumps(self.value)} does not resolve from a registry"
+
+
+type Declaration = DeclaredPath | RejectedSource | RemoteReference
 
 
 def main(file_paths: list[str]) -> int:
-    """Report every declared path that leaves the repository among the given manifests.
+    """Report the declared paths leaving the repository and the non-registry dependencies among the given manifests.
 
     The current working directory, with symlinks followed, is taken as the repository root, and ``~/`` in a
     ``package.json`` or ``pnpm-workspace.yaml`` location expands to the current user's home directory. Prints one
@@ -203,17 +238,17 @@ def resolve_declaration(declaration: Declaration, manifest_directory: Path) -> D
 
     Returns:
         A declared path with its path made absolute and symlinks followed, components that do not exist kept as
-        written; a rejected source unchanged.
+        written; a rejected source or remote reference unchanged.
     """
     match declaration:
         case DeclaredPath(path=path):
             return replace(declaration, path=(manifest_directory / path).resolve())
-        case RejectedSource():
+        case RejectedSource() | RemoteReference():
             return declaration
 
 
 def collect_pyproject_declarations(document: object, manifest_directory: Path) -> list[Declaration]:
-    """Collect the uv sources, uv workspace paths, ty extra paths and path requirements of a parsed ``pyproject.toml``.
+    """Collect the uv sources, uv workspace paths, ty extra paths and direct references of a parsed ``pyproject.toml``.
 
     Args:
         document: The parsed TOML document.
@@ -221,7 +256,7 @@ def collect_pyproject_declarations(document: object, manifest_directory: Path) -
 
     Returns:
         Every non-workspace uv source, every uv workspace member and exclude, every ty extra path, then every
-        direct reference to a path in the project dependencies, optional dependencies and dependency groups.
+        direct reference in the requirement lists ``collect_requirement_declarations`` reads.
     """
     tool = find_mapping(document, "tool")
     uv = find_mapping(tool, "uv")
@@ -237,46 +272,72 @@ def collect_pyproject_declarations(document: object, manifest_directory: Path) -
 
 
 def collect_requirement_declarations(document: object, manifest_directory: Path) -> list[Declaration]:
-    """Collect the PEP 508 direct references to paths among a ``pyproject.toml``'s requirement lists.
+    """Collect the PEP 508 direct references among a ``pyproject.toml``'s requirement lists.
 
     Args:
         document: The parsed TOML document.
         manifest_directory: Absolute directory of the manifest, which ``${PROJECT_ROOT}`` expands to.
 
     Returns:
-        A declared path for each path requirement in ``project.dependencies``, each
-        ``project.optional-dependencies`` extra and each ``dependency-groups`` group, in that order.
+        A declaration for each direct reference in ``project.dependencies``, each
+        ``project.optional-dependencies`` extra, each ``dependency-groups`` group, ``tool.uv.dev-dependencies``,
+        ``tool.uv.override-dependencies``, ``tool.uv.constraint-dependencies``,
+        ``tool.uv.build-constraint-dependencies`` and ``build-system.requires``, in that order.
+    """
+    declarations: list[Declaration] = []
+    for key_path, requirements in enumerate_requirement_lists(document):
+        for index, requirement in enumerate(requirements):
+            if not isinstance(requirement, str):
+                continue
+            declaration = build_requirement_declaration(f"{key_path}[{index}]", requirement, manifest_directory)
+            if declaration is not None:
+                declarations.append(declaration)
+    return declarations
+
+
+def enumerate_requirement_lists(document: object) -> list[tuple[str, list[object]]]:
+    """Pair each PEP 508 requirement list of a parsed ``pyproject.toml`` with its key path.
+
+    Args:
+        document: The parsed TOML document.
+
+    Returns:
+        ``project.dependencies``, each ``project.optional-dependencies`` extra, each ``dependency-groups`` group,
+        ``tool.uv.dev-dependencies``, ``tool.uv.override-dependencies``, ``tool.uv.constraint-dependencies``,
+        ``tool.uv.build-constraint-dependencies`` and ``build-system.requires``, in that order; a list missing from
+        the document is empty.
     """
     project = find_mapping(document, "project")
     optional_dependencies = find_mapping(project, "optional-dependencies")
     dependency_groups = find_mapping(document, "dependency-groups")
-    requirement_lists = [("project.dependencies", find_list(project, "dependencies"))]
-    for extra in optional_dependencies:
-        requirement_lists.append((f"project.optional-dependencies.{extra}", find_list(optional_dependencies, extra)))
-    for group in dependency_groups:
-        requirement_lists.append((f"dependency-groups.{group}", find_list(dependency_groups, group)))
+    uv = find_mapping(find_mapping(document, "tool"), "uv")
+    return [
+        ("project.dependencies", find_list(project, "dependencies")),
+        *(
+            (f"project.optional-dependencies.{extra}", find_list(optional_dependencies, extra))
+            for extra in optional_dependencies
+        ),
+        *((f"dependency-groups.{group}", find_list(dependency_groups, group)) for group in dependency_groups),
+        ("tool.uv.dev-dependencies", find_list(uv, "dev-dependencies")),
+        ("tool.uv.override-dependencies", find_list(uv, "override-dependencies")),
+        ("tool.uv.constraint-dependencies", find_list(uv, "constraint-dependencies")),
+        ("tool.uv.build-constraint-dependencies", find_list(uv, "build-constraint-dependencies")),
+        ("build-system.requires", find_list(find_mapping(document, "build-system"), "requires")),
+    ]
 
-    declarations: list[Declaration] = []
-    for key_path, requirements in requirement_lists:
-        for index, requirement in enumerate(requirements):
-            if not isinstance(requirement, str):
-                continue
-            path = parse_requirement_path(requirement, manifest_directory)
-            if path is not None:
-                declarations.append(DeclaredPath(key_path=f"{key_path}[{index}]", value=requirement, path=path))
-    return declarations
 
-
-def parse_requirement_path(requirement: str, manifest_directory: Path) -> Path | None:
-    """Extract the filesystem location a PEP 508 requirement's direct reference names.
+def build_requirement_declaration(key_path: str, requirement: str, manifest_directory: Path) -> Declaration | None:
+    """Build the declaration a PEP 508 requirement's direct reference contributes.
 
     Args:
+        key_path: Key path of the requirement.
         requirement: A requirement string such as ``name @ file:///path`` or ``name>=1``.
         manifest_directory: Absolute directory of the manifest, which ``${PROJECT_ROOT}`` expands to.
 
     Returns:
-        The path of a ``file:`` URL or bare path direct reference, with ``${PROJECT_ROOT}`` expanded; None for a
-        registry requirement or a direct reference to any other URL.
+        A declared path for a direct reference to a ``file:`` URL or to a location without a URL scheme, which uv
+        reads as a path relative to the manifest's directory, with ``${PROJECT_ROOT}`` expanded; a remote
+        reference for a direct reference to a URL with any other scheme; None for a registry requirement.
     """
     match = DIRECT_REFERENCE_PATTERN.match(requirement)
     if match is None:
@@ -284,12 +345,12 @@ def parse_requirement_path(requirement: str, manifest_directory: Path) -> Path |
 
     location = match.group("location").replace(PROJECT_ROOT_VARIABLE, str(manifest_directory))
     if location.startswith(FILE_URL_PROTOCOL):
-        return Path(url2pathname(urlsplit(location).path))
+        return DeclaredPath(key_path=key_path, value=requirement, path=Path(url2pathname(urlsplit(location).path)))
 
-    if location in BARE_PATHS or location.startswith(REQUIREMENT_BARE_PATH_PREFIXES):
-        return Path(location)
+    if URL_SCHEME_PATTERN.match(location):
+        return RemoteReference(key_path=key_path, value=requirement)
 
-    return None
+    return DeclaredPath(key_path=key_path, value=requirement, path=Path(location))
 
 
 def collect_uv_source_declarations(sources: dict[str, object]) -> list[Declaration]:
@@ -389,7 +450,8 @@ def collect_package_json_declarations(document: object, home_directory: Path) ->
         home_directory: Directory a ``~/`` location expands to.
 
     Returns:
-        A declared path for each path spec in the four dependency fields.
+        A declared path for each path spec and a remote reference for each non-registry spec in the four
+        dependency fields.
     """
     return [
         declaration
@@ -406,8 +468,8 @@ def collect_pnpm_workspace_declarations(document: object, home_directory: Path) 
         home_directory: Directory a ``~/`` location expands to.
 
     Returns:
-        A declared path for each ``packages`` entry, then for each path spec in ``catalog``, ``catalogs`` and
-        ``overrides``.
+        A declared path for each ``packages`` entry, then a declared path for each path spec and a remote
+        reference for each non-registry spec in ``catalog``, ``catalogs`` and ``overrides``.
     """
     return [
         *collect_workspace_package_declarations(find_list(document, "packages")),
@@ -437,14 +499,15 @@ def collect_workspace_package_declarations(packages: list[object]) -> list[Decla
 
 
 def collect_named_catalog_declarations(catalogs: dict[str, object], home_directory: Path) -> list[Declaration]:
-    """Collect the path specs of every named catalog in a ``pnpm-workspace.yaml``.
+    """Collect the path and non-registry specs of every named catalog in a ``pnpm-workspace.yaml``.
 
     Args:
         catalogs: The ``catalogs`` map from catalog name to a map from package name to specifier.
         home_directory: Directory a ``~/`` location expands to.
 
     Returns:
-        A declared path for each path spec, under the key path ``catalogs.<name>.<package>``.
+        A declared path for each path spec and a remote reference for each non-registry spec, under the key path
+        ``catalogs.<name>.<package>``.
     """
     return [
         declaration
@@ -458,7 +521,7 @@ def collect_named_catalog_declarations(catalogs: dict[str, object], home_directo
 def collect_specifier_declarations(
     field: str, specifiers: dict[str, object], home_directory: Path
 ) -> list[Declaration]:
-    """Collect the path specs of one map from package name to version specifier.
+    """Collect the path and non-registry specs of one map from package name to version specifier.
 
     Args:
         field: Key path of the map, used as the leading key path segments.
@@ -466,33 +529,104 @@ def collect_specifier_declarations(
         home_directory: Directory a ``~/`` location expands to.
 
     Returns:
-        A declared path for each specifier that names a filesystem location.
+        A declared path for each specifier that names a filesystem location and a remote reference for each
+        specifier that names a URL, git repository or tarball.
     """
     return [
-        DeclaredPath(key_path=f"{field}.{name}", value=specifier, path=build_specifier_path(location, home_directory))
+        declaration
         for name, specifier in specifiers.items()
-        if isinstance(specifier, str) and (location := parse_specifier_location(specifier)) is not None
+        if isinstance(specifier, str)
+        and (declaration := build_specifier_declaration(f"{field}.{name}", specifier, home_directory)) is not None
     ]
 
 
+def build_specifier_declaration(key_path: str, specifier: str, home_directory: Path) -> Declaration | None:
+    """Build the declaration one package specifier contributes.
+
+    Args:
+        key_path: Key path of the specifier.
+        specifier: A ``package.json`` or ``pnpm-workspace.yaml`` version specifier.
+        home_directory: Directory a ``~/`` location expands to.
+
+    Returns:
+        A declared path for a path spec, a remote reference for a non-registry spec, and None for a registry spec.
+    """
+    location = parse_specifier_location(specifier)
+    if location is not None:
+        return DeclaredPath(key_path=key_path, value=specifier, path=build_specifier_path(location, home_directory))
+
+    if is_remote_specifier(specifier):
+        return RemoteReference(key_path=key_path, value=specifier)
+
+    if is_bare_path_specifier(specifier):
+        return DeclaredPath(key_path=key_path, value=specifier, path=Path(specifier))
+
+    return None
+
+
+def is_remote_specifier(specifier: str) -> bool:
+    """Tell whether a package specifier that names no filesystem location by its prefix resolves from a URL or git.
+
+    Args:
+        specifier: A ``package.json`` or ``pnpm-workspace.yaml`` version specifier that ``parse_specifier_location``
+            declines.
+
+    Returns:
+        True for a spec with a protocol other than ``npm:``, ``jsr:``, ``workspace:`` and ``catalog:`` (git, hosted
+        git and tarball URLs), an scp-style git location (``git@host:path``) or a GitHub shorthand
+        (``owner/repository``, optionally with ``#reference``, as npm's hosted-git-info recognizes it); False for a
+        registry range, tag or one of those four protocols.
+    """
+    scheme = URL_SCHEME_PATTERN.match(specifier)
+    if scheme is not None:
+        return scheme.group().lower() not in REGISTRY_PROTOCOLS
+
+    return bool(SCP_GIT_LOCATION_PATTERN.match(specifier) or GITHUB_SHORTHAND_PATTERN.match(specifier))
+
+
 def parse_specifier_location(specifier: str) -> str | None:
-    """Extract the filesystem location a package specifier names.
+    """Extract the filesystem location a package specifier names by its protocol or leading characters.
 
     Args:
         specifier: A ``package.json`` or ``pnpm-workspace.yaml`` version specifier.
 
     Returns:
-        The location of a ``file:`` or ``link:`` spec or of a bare path, or None for any other specifier. A
-        semver range such as ``~1.2.3`` is not a path; only ``~/`` starts one.
+        The location of a ``file:`` or ``link:`` spec, or the spec itself when it starts with ``.``, ``/`` or
+        ``~/``; None for any other specifier. A semver range such as ``~1.2.3`` is not a path; only ``~/`` starts
+        one.
     """
     for protocol in PATH_PROTOCOLS:
         if specifier.startswith(protocol):
             return specifier.removeprefix(protocol)
 
-    if specifier in BARE_PATHS or specifier.startswith(BARE_PATH_PREFIXES):
+    if specifier.startswith(BARE_PATH_PREFIXES):
         return specifier
 
     return None
+
+
+def is_bare_path_specifier(specifier: str) -> bool:
+    """Tell whether a package specifier that is not a remote spec is a path by its shape, as npm reads it.
+
+    Note:
+        npm reads a spec holding ``/`` or ending in a tarball extension as a file or directory once it is neither
+        a URL nor a GitHub shorthand, and pnpm's local resolver, run last, claims the same ``/`` shapes. pnpm reads
+        a slash-free ``name.tgz`` as a dist-tag instead, which, like npm's reading, stays inside the manifest's
+        directory unless a symlink there points elsewhere.
+
+    Args:
+        specifier: A ``package.json`` or ``pnpm-workspace.yaml`` version specifier that
+            ``parse_specifier_location`` and ``is_remote_specifier`` both decline.
+
+    Returns:
+        True for a spec without a URL scheme that contains ``/`` (``vendor/packages/lint``, ``@scope/name``) or
+        ends in ``.tgz``, ``.tar.gz`` or ``.tar``; False for a registry range or tag and for any spec with a
+        protocol.
+    """
+    if URL_SCHEME_PATTERN.match(specifier):
+        return False
+
+    return PATH_SEPARATOR in specifier or TARBALL_FILENAME_PATTERN.search(specifier) is not None
 
 
 def build_specifier_path(location: str, home_directory: Path) -> Path:
@@ -553,12 +687,12 @@ def is_violation(declaration: Declaration, repository_root: Path) -> bool:
         repository_root: Absolute directory, with symlinks followed, that every declared path must resolve inside.
 
     Returns:
-        True for a rejected source or a path outside the repository root, False otherwise.
+        True for a rejected source, a remote reference or a path outside the repository root, False otherwise.
     """
     match declaration:
         case DeclaredPath(path=path):
             return not path.is_relative_to(repository_root)
-        case RejectedSource():
+        case RejectedSource() | RemoteReference():
             return True
 
 
