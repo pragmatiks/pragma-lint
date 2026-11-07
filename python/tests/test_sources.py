@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from pragmatiks_lint.sources import collect_report_lines, main
 
 OUTSIDE = "resolves outside the repository"
 NOT_WORKSPACE_OR_PATH = "is neither a workspace member nor a path inside the repository"
+NOT_REGISTRY = "does not resolve from a registry"
 
 ALLOWED_MANIFESTS: tuple[tuple[str, str], ...] = (
     ("pyproject.toml", '[project]\nname = "member"\n'),
@@ -21,21 +23,33 @@ ALLOWED_MANIFESTS: tuple[tuple[str, str], ...] = (
     ("pyproject.toml", '[tool.uv.workspace]\nmembers = ["packages/*", "../shared"]\nexclude = ["packages/legacy"]\n'),
     ("pyproject.toml", '[tool.ty.environment]\nextra-paths = ["src", "../shared/src"]\n'),
     ("pyproject.toml", '[project]\ndependencies = ["pkg>=1", "pkg[extra]>=1; python_version >= \'3.13\'"]\n'),
-    ("pyproject.toml", '[project]\ndependencies = ["pkg @ https://example.com/pkg-1.0.0-py3-none-any.whl"]\n'),
     ("pyproject.toml", '[project]\ndependencies = ["pkg @ file:./vendor/pkg", "other @ ./vendor/other"]\n'),
     ("pyproject.toml", '[project]\ndependencies = ["pkg @ file:///${PROJECT_ROOT}/vendor/pkg"]\n'),
     ("pyproject.toml", '[project]\ndependencies = ["pkg @ ${PROJECT_ROOT}/../shared"]\n'),
     ("pyproject.toml", '[dependency-groups]\ndev = ["pytest>=9", { include-group = "lint" }]\nlint = ["ruff"]\n'),
+    (
+        "pyproject.toml",
+        '[tool.uv]\ndev-dependencies = ["pytest>=9", "local @ ./vendor/local"]\n'
+        'override-dependencies = ["pkg==1.0"]\nconstraint-dependencies = ["pkg<2", "shared @ file:../shared"]\n',
+    ),
+    ("pyproject.toml", '[build-system]\nrequires = ["hatchling>=1.27", "backend @ ../shared"]\n'),
+    ("pyproject.toml", '[tool.uv]\nbuild-constraint-dependencies = ["setuptools<80", "backend @ ../shared"]\n'),
+    ("pyproject.toml", '[project]\ndependencies = ["pkg @ vendor/pkg", "wheel @ pkg-1.0-py3-none-any.whl"]\n'),
     ("package.json", '{"dependencies": {"react": "^19.0.0", "lint": "workspace:*", "tilde": "~1.2.3"}}'),
     ("package.json", '{"devDependencies": {"shared": "file:../shared", "linked": "link:../shared"}}'),
-    ("package.json", '{"dependencies": {"alias": "npm:react@19", "remote": "github:owner/name"}}'),
+    ("package.json", '{"dependencies": {"alias": "npm:react@19", "scoped": "npm:@scope/name@^1"}}'),
+    ("package.json", '{"dependencies": {"jsr": "jsr:@std/path@^1", "tag": "latest", "range": ">=1.2 <2 || 3.x"}}'),
+    ("package.json", '{"devDependencies": {"catalog": "catalog:", "named": "catalog:react19"}}'),
     ("package.json", '{"peerDependencies": {"shared": "../shared"}}'),
     ("package.json", '{"dependencies": {"home": "file:~/repository/packages/shared"}}'),
+    ("package.json", '{"dependencies": {"scoped": "@scope/name", "nested": "vendor/packages/lint"}}'),
+    ("package.json", '{"dependencies": {"tarball": "lint-1.0.0.tgz", "hidden": ".lint", "trailing": "owner/lint/"}}'),
+    ("package.json", '{"dependencies": {"beta": "beta", "prerelease": "1.0.0-rc.1", "any": "*", "x": "1.x"}}'),
     ("package.json", '{"overrides": {"shared": "file:../../sibling"}, "resolutions": {"x": "link:../../sibling"}}'),
     ("package.json", "[]"),
     ("pnpm-workspace.yaml", ""),
     ("pnpm-workspace.yaml", "packages:\n  - packages/*\n  - '!packages/legacy'\n"),
-    ("pnpm-workspace.yaml", "overrides:\n  shared: link:../shared\n  react: ^19.0.0\n"),
+    ("pnpm-workspace.yaml", "overrides:\n  shared: link:../shared\n  react: ^19.0.0\n  removed: '-'\n"),
     ("pnpm-workspace.yaml", "catalog:\n  react: ^19.0.0\n  shared: link:../shared\n"),
     ("pnpm-workspace.yaml", "catalogs:\n  react19:\n    react: ^19.0.0\n    shared: file:../shared\n"),
 )
@@ -141,6 +155,31 @@ DISALLOWED_MANIFESTS: tuple[tuple[str, str, str], ...] = (
         "overrides:\n  sdk: ~/pragma-sdk\n",
         f'overrides.sdk = "~/pragma-sdk" {OUTSIDE}',
     ),
+    (
+        "package.json",
+        '{"dependencies": {"sdk": "packages/../../pragma-sdk"}}',
+        f'dependencies.sdk = "packages/../../pragma-sdk" {OUTSIDE}',
+    ),
+    (
+        "package.json",
+        '{"devDependencies": {"sdk": "pragmatiks/lint/../../../pragma-sdk"}}',
+        f'devDependencies.sdk = "pragmatiks/lint/../../../pragma-sdk" {OUTSIDE}',
+    ),
+    (
+        "package.json",
+        '{"dependencies": {"sdk": "vendor/../../sdk-1.0.0.tgz"}}',
+        f'dependencies.sdk = "vendor/../../sdk-1.0.0.tgz" {OUTSIDE}',
+    ),
+    (
+        "package.json",
+        '{"peerDependencies": {"sdk": "@scope/../../../pragma-sdk"}}',
+        f'peerDependencies.sdk = "@scope/../../../pragma-sdk" {OUTSIDE}',
+    ),
+    (
+        "pnpm-workspace.yaml",
+        "catalog:\n  sdk: vendor/../../pragma-sdk\n",
+        f'catalog.sdk = "vendor/../../pragma-sdk" {OUTSIDE}',
+    ),
 )
 
 DISALLOWED_REQUIREMENTS: tuple[tuple[str, str], ...] = (
@@ -161,6 +200,72 @@ DISALLOWED_REQUIREMENTS: tuple[tuple[str, str], ...] = (
         '[dependency-groups]\ndev = [{ include-group = "lint" }, "pkg @ ./../../x"]\n',
         'dependency-groups.dev[1] = "pkg @ ./../../x"',
     ),
+    ('[tool.uv]\ndev-dependencies = ["pkg @ ../x"]\n', 'tool.uv.dev-dependencies[0] = "pkg @ ../x"'),
+    (
+        '[tool.uv]\noverride-dependencies = ["pkg @ file:../x"]\n',
+        'tool.uv.override-dependencies[0] = "pkg @ file:../x"',
+    ),
+    (
+        '[tool.uv]\nconstraint-dependencies = ["pkg @ ${PROJECT_ROOT}/../x"]\n',
+        'tool.uv.constraint-dependencies[0] = "pkg @ ${PROJECT_ROOT}/../x"',
+    ),
+    ('[build-system]\nrequires = ["hatchling", "backend @ ../x"]\n', 'build-system.requires[1] = "backend @ ../x"'),
+    (
+        '[tool.uv]\nbuild-constraint-dependencies = ["setuptools @ file:../x"]\n',
+        'tool.uv.build-constraint-dependencies[0] = "setuptools @ file:../x"',
+    ),
+    ('[project]\ndependencies = ["pkg @ vendor/../../x"]\n', 'project.dependencies[0] = "pkg @ vendor/../../x"'),
+    (
+        '[tool.uv]\nbuild-constraint-dependencies = ["setuptools @ vendor/../../x"]\n',
+        'tool.uv.build-constraint-dependencies[0] = "setuptools @ vendor/../../x"',
+    ),
+)
+
+REMOTE_REQUIREMENTS: tuple[str, ...] = (
+    "pkg @ https://example.com/pkg-1.0.0-py3-none-any.whl",
+    "pkg @ http://example.com/pkg-1.0.0.tar.gz",
+    "pkg @ git+https://github.com/pragmatiks/pkg@v1.0.0",
+    "pkg[extra] @ git+ssh://git@github.com/pragmatiks/pkg.git ; python_version >= '3.13'",
+    "pkg @ git+file:///srv/pkg",
+    "pkg @ hg+https://example.com/pkg",
+    "pkg @ svn+https://example.com/pkg",
+    "pkg @ bzr+https://example.com/pkg",
+)
+
+REQUIREMENT_LIST_TABLES: tuple[tuple[str, str], ...] = (
+    ("[project]\ndependencies = [{requirement}]\n", "project.dependencies[0]"),
+    ("[project.optional-dependencies]\nremote = [{requirement}]\n", "project.optional-dependencies.remote[0]"),
+    ('[dependency-groups]\ndev = [{{ include-group = "lint" }}, {requirement}]\n', "dependency-groups.dev[1]"),
+    ("[tool.uv]\ndev-dependencies = [{requirement}]\n", "tool.uv.dev-dependencies[0]"),
+    ("[tool.uv]\noverride-dependencies = [{requirement}]\n", "tool.uv.override-dependencies[0]"),
+    ("[tool.uv]\nconstraint-dependencies = [{requirement}]\n", "tool.uv.constraint-dependencies[0]"),
+    ("[tool.uv]\nbuild-constraint-dependencies = [{requirement}]\n", "tool.uv.build-constraint-dependencies[0]"),
+    ('[build-system]\nrequires = ["hatchling", {requirement}]\n', "build-system.requires[1]"),
+)
+
+REMOTE_SPECIFIERS: tuple[str, ...] = (
+    "git+https://github.com/pragmatiks/lint.git#v1.0.0",
+    "git+ssh://git@github.com/pragmatiks/lint.git",
+    "git://github.com/pragmatiks/lint.git",
+    "github:pragmatiks/lint#main",
+    "gitlab:pragmatiks/lint",
+    "bitbucket:pragmatiks/lint",
+    "gist:11081aaa281",
+    "https://example.com/lint-1.0.0.tgz",
+    "http://example.com/lint-1.0.0.tgz",
+    "git@github.com:pragmatiks/lint.git",
+    "pragmatiks/lint",
+    "pragmatiks/lint#semver:^1.0.0",
+)
+
+SPECIFIER_MAPS: tuple[tuple[str, str, str], ...] = (
+    ("package.json", '{{"dependencies": {{"lint": "{specifier}"}}}}', "dependencies.lint"),
+    ("package.json", '{{"devDependencies": {{"lint": "{specifier}"}}}}', "devDependencies.lint"),
+    ("package.json", '{{"optionalDependencies": {{"lint": "{specifier}"}}}}', "optionalDependencies.lint"),
+    ("package.json", '{{"peerDependencies": {{"lint": "{specifier}"}}}}', "peerDependencies.lint"),
+    ("pnpm-workspace.yaml", "catalog:\n  lint: '{specifier}'\n", "catalog.lint"),
+    ("pnpm-workspace.yaml", "catalogs:\n  next:\n    lint: '{specifier}'\n", "catalogs.next.lint"),
+    ("pnpm-workspace.yaml", "overrides:\n  lint: '{specifier}'\n", "overrides.lint"),
 )
 
 UNPARSABLE_MANIFESTS: tuple[tuple[str, bytes], ...] = (
@@ -265,6 +370,24 @@ def test_symlink_escaping_repository_fails(repository_root: Path, home_directory
     (repository_root / "vendor-sdk").symlink_to(repository_root.parent / "pragma-sdk")
     content = '[tool.uv.sources]\npragmatiks-sdk = { path = "vendor-sdk" }\n'
     manifest_path = write_manifest(repository_root, "pyproject.toml", content)
+
+    assert len(collect_report_lines(str(manifest_path), repository_root, home_directory)) == 1
+
+
+@pytest.mark.parametrize(
+    ("file_name", "content"),
+    [
+        ("pyproject.toml", '[project]\ndependencies = ["pragmatiks-sdk @ vendor-sdk"]\n'),
+        ("package.json", '{"dependencies": {"sdk": "sdk-1.0.0.tgz"}}'),
+    ],
+)
+def test_unprefixed_symlink_escaping_repository_fails(
+    repository_root: Path, home_directory: Path, file_name: str, content: str
+) -> None:
+    """Verify a path written without ``./`` that names an in-repository symlink to a sibling checkout fails."""
+    (repository_root / "vendor-sdk").symlink_to(repository_root.parent / "pragma-sdk")
+    (repository_root / "sdk-1.0.0.tgz").symlink_to(repository_root.parent / "pragma-sdk")
+    manifest_path = write_manifest(repository_root, file_name, content)
 
     assert len(collect_report_lines(str(manifest_path), repository_root, home_directory)) == 1
 
@@ -387,3 +510,43 @@ def test_absolute_requirement_inside_repository_passes(repository_root: Path, ho
     manifest_path = write_manifest(repository_root, "pyproject.toml", f'[project]\ndependencies = ["{requirement}"]\n')
 
     assert collect_report_lines(str(manifest_path), repository_root, home_directory) == []
+
+
+@pytest.mark.parametrize("requirement", REMOTE_REQUIREMENTS)
+@pytest.mark.parametrize(("template", "key_path"), REQUIREMENT_LIST_TABLES)
+def test_remote_requirements_fail(
+    repository_root: Path, home_directory: Path, requirement: str, template: str, key_path: str
+) -> None:
+    """Verify PEP 508 direct references to URL and VCS locations fail by key in every requirement list."""
+    content = template.format(requirement=json.dumps(requirement))
+    manifest_path = write_manifest(repository_root, "pyproject.toml", content)
+
+    assert collect_report_lines(str(manifest_path), repository_root, home_directory) == [
+        f"{manifest_path}: {key_path} = {json.dumps(requirement)} {NOT_REGISTRY}"
+    ]
+
+
+@pytest.mark.parametrize("specifier", REMOTE_SPECIFIERS)
+@pytest.mark.parametrize(("file_name", "template", "key_path"), SPECIFIER_MAPS)
+def test_remote_specifiers_fail(
+    repository_root: Path, home_directory: Path, specifier: str, file_name: str, template: str, key_path: str
+) -> None:
+    """Verify git, hosted git and tarball specs fail by key in every package specifier map."""
+    manifest_path = write_manifest(repository_root, file_name, template.format(specifier=specifier))
+
+    assert collect_report_lines(str(manifest_path), repository_root, home_directory) == [
+        f"{manifest_path}: {key_path} = {json.dumps(specifier)} {NOT_REGISTRY}"
+    ]
+
+
+def test_main_reports_remote_reference_with_footer(
+    repository_root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Verify a remote reference fails the run and the footer names the registry rule."""
+    monkeypatch.chdir(repository_root)
+    write_manifest(repository_root, "pyproject.toml", '[build-system]\nrequires = ["b @ git+https://x.test/b"]\n')
+
+    assert main(["pyproject.toml"]) == 1
+    output = capsys.readouterr().out
+    assert f'pyproject.toml: build-system.requires[0] = "b @ git+https://x.test/b" {NOT_REGISTRY}' in output
+    assert "every dependency resolves from a registry" in output
