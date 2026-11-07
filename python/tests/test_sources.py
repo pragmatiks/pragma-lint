@@ -20,6 +20,12 @@ ALLOWED_MANIFESTS: tuple[tuple[str, str], ...] = (
     ("pyproject.toml", '[tool.uv.sources]\nliteral = { path = "~/pragma-sdk" }\n'),
     ("pyproject.toml", '[tool.uv.workspace]\nmembers = ["packages/*", "../shared"]\nexclude = ["packages/legacy"]\n'),
     ("pyproject.toml", '[tool.ty.environment]\nextra-paths = ["src", "../shared/src"]\n'),
+    ("pyproject.toml", '[project]\ndependencies = ["pkg>=1", "pkg[extra]>=1; python_version >= \'3.13\'"]\n'),
+    ("pyproject.toml", '[project]\ndependencies = ["pkg @ https://example.com/pkg-1.0.0-py3-none-any.whl"]\n'),
+    ("pyproject.toml", '[project]\ndependencies = ["pkg @ file:./vendor/pkg", "other @ ./vendor/other"]\n'),
+    ("pyproject.toml", '[project]\ndependencies = ["pkg @ file:///${PROJECT_ROOT}/vendor/pkg"]\n'),
+    ("pyproject.toml", '[project]\ndependencies = ["pkg @ ${PROJECT_ROOT}/../shared"]\n'),
+    ("pyproject.toml", '[dependency-groups]\ndev = ["pytest>=9", { include-group = "lint" }]\nlint = ["ruff"]\n'),
     ("package.json", '{"dependencies": {"react": "^19.0.0", "lint": "workspace:*", "tilde": "~1.2.3"}}'),
     ("package.json", '{"devDependencies": {"shared": "file:../shared", "linked": "link:../shared"}}'),
     ("package.json", '{"dependencies": {"alias": "npm:react@19", "remote": "github:owner/name"}}'),
@@ -134,6 +140,26 @@ DISALLOWED_MANIFESTS: tuple[tuple[str, str, str], ...] = (
         "pnpm-workspace.yaml",
         "overrides:\n  sdk: ~/pragma-sdk\n",
         f'overrides.sdk = "~/pragma-sdk" {OUTSIDE}',
+    ),
+)
+
+DISALLOWED_REQUIREMENTS: tuple[tuple[str, str], ...] = (
+    (
+        '[project]\ndependencies = ["pkg @ file:../../sibling"]\n',
+        'project.dependencies[0] = "pkg @ file:../../sibling"',
+    ),
+    (
+        '[project]\ndependencies = ["pkg @ file:///${PROJECT_ROOT}/../x"]\n',
+        'project.dependencies[0] = "pkg @ file:///${PROJECT_ROOT}/../x"',
+    ),
+    ('[project]\ndependencies = ["pkg @ ../x"]\n', 'project.dependencies[0] = "pkg @ ../x"'),
+    (
+        "[project.optional-dependencies]\nlocal = [\"pkg[extra] @ file:../x ; python_version >= '3.13'\"]\n",
+        "project.optional-dependencies.local[0] = \"pkg[extra] @ file:../x ; python_version >= '3.13'\"",
+    ),
+    (
+        '[dependency-groups]\ndev = [{ include-group = "lint" }, "pkg @ ./../../x"]\n',
+        'dependency-groups.dev[1] = "pkg @ ./../../x"',
     ),
 )
 
@@ -330,3 +356,34 @@ def test_main_reports_every_manifest_with_footer(
     assert 'packages/member/pnpm-workspace.yaml: overrides.sdk = "link:../../../pragma-sdk"' in output
     assert "Dependency source check failed" in output
     assert "docs/patterns/dependency-resolution.md" in output
+
+
+@pytest.mark.parametrize(("content", "expected"), DISALLOWED_REQUIREMENTS)
+def test_disallowed_requirements_fail(repository_root: Path, home_directory: Path, content: str, expected: str) -> None:
+    """Verify PEP 508 direct references to paths outside the repository fail by key."""
+    manifest_path = write_manifest(repository_root, "pyproject.toml", content)
+
+    assert collect_report_lines(str(manifest_path), repository_root, home_directory) == [
+        f"{manifest_path}: {expected} {OUTSIDE}"
+    ]
+
+
+@pytest.mark.parametrize("prefix", ["file://", ""])
+def test_absolute_requirement_outside_repository_fails(
+    repository_root: Path, home_directory: Path, prefix: str
+) -> None:
+    """Verify an absolute ``file:`` URL or bare absolute path to a sibling checkout fails."""
+    requirement = f"pragmatiks-sdk @ {prefix}{repository_root.parent / 'pragma-sdk'}"
+    manifest_path = write_manifest(repository_root, "pyproject.toml", f'[project]\ndependencies = ["{requirement}"]\n')
+
+    assert collect_report_lines(str(manifest_path), repository_root, home_directory) == [
+        f'{manifest_path}: project.dependencies[0] = "{requirement}" {OUTSIDE}'
+    ]
+
+
+def test_absolute_requirement_inside_repository_passes(repository_root: Path, home_directory: Path) -> None:
+    """Verify an absolute ``file:`` URL inside the repository passes."""
+    requirement = f"shared @ file://{repository_root / 'packages' / 'shared'}"
+    manifest_path = write_manifest(repository_root, "pyproject.toml", f'[project]\ndependencies = ["{requirement}"]\n')
+
+    assert collect_report_lines(str(manifest_path), repository_root, home_directory) == []
