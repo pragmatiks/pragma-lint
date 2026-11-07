@@ -8,7 +8,11 @@ is the repository every declared path must stay inside. Checked declarations:
   key, are rejected. Each ``tool.uv.workspace.members`` and ``tool.uv.workspace.exclude`` entry and each
   ``tool.ty.environment.extra-paths`` entry must be inside the repository; a glob is judged with its wildcards
   taken literally, so ``packages/*`` passes and ``../*`` fails. uv takes ``~`` literally, so a uv source or
-  workspace path starting with ``~/`` names a directory inside the manifest's directory.
+  workspace path starting with ``~/`` names a directory inside the manifest's directory. Each string requirement
+  in ``project.dependencies``, ``project.optional-dependencies`` and ``dependency-groups`` written as a PEP 508
+  direct reference (``name @ location``) to a ``file:`` URL or a bare path (``.``, ``..``, or starting with
+  ``./``, ``../`` or ``/``) must be inside the repository; ``${PROJECT_ROOT}`` expands to the manifest's absolute
+  directory, as uv expands it. Registry requirements, other URLs and ``include-group`` tables pass.
 - ``package.json``: values in ``dependencies``, ``devDependencies``, ``optionalDependencies`` and
   ``peerDependencies`` written as a ``file:`` or ``link:`` spec, or as a bare path (``.``, ``..``, or starting
   with ``./``, ``../``, ``/`` or ``~/``), must be inside the repository; ``workspace:``, registry, alias and git
@@ -30,10 +34,13 @@ checked. Any printed line is followed by the policy footer and exit status 1; a 
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tomllib
 from dataclasses import dataclass, replace
 from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.request import url2pathname
 
 import yaml
 
@@ -46,6 +53,10 @@ HOME_PREFIX = "~/"
 BARE_PATH_PREFIXES = ("./", "../", "/", HOME_PREFIX)
 BARE_PATHS = frozenset({".", ".."})
 WORKSPACE_PACKAGE_NEGATION = "!"
+DIRECT_REFERENCE_PATTERN = re.compile(r"^\s*[A-Za-z0-9][A-Za-z0-9._-]*\s*(\[[^\]]*\])?\s*@\s*(?P<location>\S+)")
+FILE_URL_PROTOCOL = "file:"
+REQUIREMENT_BARE_PATH_PREFIXES = ("./", "../", "/")
+PROJECT_ROOT_VARIABLE = "${PROJECT_ROOT}"
 POLICY_FOOTER = (
     "\n"
     "Dependency source check failed\n"
@@ -174,7 +185,7 @@ def load_declarations(manifest_path: Path, home_directory: Path) -> list[Declara
     text = manifest_path.read_text(encoding="utf-8")
     match manifest_path.name:
         case "pyproject.toml":
-            return collect_pyproject_declarations(tomllib.loads(text))
+            return collect_pyproject_declarations(tomllib.loads(text), manifest_path.parent.resolve())
         case "package.json":
             return collect_package_json_declarations(json.loads(text), home_directory)
         case "pnpm-workspace.yaml":
@@ -201,14 +212,16 @@ def resolve_declaration(declaration: Declaration, manifest_directory: Path) -> D
             return declaration
 
 
-def collect_pyproject_declarations(document: object) -> list[Declaration]:
-    """Collect the uv sources, uv workspace paths and ty extra paths of a parsed ``pyproject.toml``.
+def collect_pyproject_declarations(document: object, manifest_directory: Path) -> list[Declaration]:
+    """Collect the uv sources, uv workspace paths, ty extra paths and path requirements of a parsed ``pyproject.toml``.
 
     Args:
         document: The parsed TOML document.
+        manifest_directory: Absolute directory of the manifest, which ``${PROJECT_ROOT}`` expands to.
 
     Returns:
-        Every non-workspace uv source, every uv workspace member and exclude, and every ty extra path, in that order.
+        Every non-workspace uv source, every uv workspace member and exclude, every ty extra path, then every
+        direct reference to a path in the project dependencies, optional dependencies and dependency groups.
     """
     tool = find_mapping(document, "tool")
     uv = find_mapping(tool, "uv")
@@ -219,7 +232,64 @@ def collect_pyproject_declarations(document: object) -> list[Declaration]:
         *collect_path_list_declarations("tool.uv.workspace.members", find_list(uv_workspace, "members")),
         *collect_path_list_declarations("tool.uv.workspace.exclude", find_list(uv_workspace, "exclude")),
         *collect_path_list_declarations("tool.ty.environment.extra-paths", find_list(ty_environment, "extra-paths")),
+        *collect_requirement_declarations(document, manifest_directory),
     ]
+
+
+def collect_requirement_declarations(document: object, manifest_directory: Path) -> list[Declaration]:
+    """Collect the PEP 508 direct references to paths among a ``pyproject.toml``'s requirement lists.
+
+    Args:
+        document: The parsed TOML document.
+        manifest_directory: Absolute directory of the manifest, which ``${PROJECT_ROOT}`` expands to.
+
+    Returns:
+        A declared path for each path requirement in ``project.dependencies``, each
+        ``project.optional-dependencies`` extra and each ``dependency-groups`` group, in that order.
+    """
+    project = find_mapping(document, "project")
+    optional_dependencies = find_mapping(project, "optional-dependencies")
+    dependency_groups = find_mapping(document, "dependency-groups")
+    requirement_lists = [("project.dependencies", find_list(project, "dependencies"))]
+    for extra in optional_dependencies:
+        requirement_lists.append((f"project.optional-dependencies.{extra}", find_list(optional_dependencies, extra)))
+    for group in dependency_groups:
+        requirement_lists.append((f"dependency-groups.{group}", find_list(dependency_groups, group)))
+
+    declarations: list[Declaration] = []
+    for key_path, requirements in requirement_lists:
+        for index, requirement in enumerate(requirements):
+            if not isinstance(requirement, str):
+                continue
+            path = parse_requirement_path(requirement, manifest_directory)
+            if path is not None:
+                declarations.append(DeclaredPath(key_path=f"{key_path}[{index}]", value=requirement, path=path))
+    return declarations
+
+
+def parse_requirement_path(requirement: str, manifest_directory: Path) -> Path | None:
+    """Extract the filesystem location a PEP 508 requirement's direct reference names.
+
+    Args:
+        requirement: A requirement string such as ``name @ file:///path`` or ``name>=1``.
+        manifest_directory: Absolute directory of the manifest, which ``${PROJECT_ROOT}`` expands to.
+
+    Returns:
+        The path of a ``file:`` URL or bare path direct reference, with ``${PROJECT_ROOT}`` expanded; None for a
+        registry requirement or a direct reference to any other URL.
+    """
+    match = DIRECT_REFERENCE_PATTERN.match(requirement)
+    if match is None:
+        return None
+
+    location = match.group("location").replace(PROJECT_ROOT_VARIABLE, str(manifest_directory))
+    if location.startswith(FILE_URL_PROTOCOL):
+        return Path(url2pathname(urlsplit(location).path))
+
+    if location in BARE_PATHS or location.startswith(REQUIREMENT_BARE_PATH_PREFIXES):
+        return Path(location)
+
+    return None
 
 
 def collect_uv_source_declarations(sources: dict[str, object]) -> list[Declaration]:
