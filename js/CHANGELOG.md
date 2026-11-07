@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.8.0 (2026-11-07)
+
+### Features
+
+- **rules**: flag pure-prefixed functions that perform I/O (PRA-453, PRA-750)
+
 ## js-v0.7.0 (2026-10-07)
 
 ### Bug Fixes
