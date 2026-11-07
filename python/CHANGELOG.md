@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.9.1 (2026-11-07)
+
+### Bug Fixes
+
+- **python**: reject URL and VCS dependency references and scan the uv and build requirement lists (PRA-932)
+
 ## python-v0.9.0 (2026-11-07)
 
 ### Bug Fixes
