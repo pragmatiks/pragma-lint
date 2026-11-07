@@ -5,6 +5,7 @@ from __future__ import annotations
 from importlib.metadata import entry_points
 from pathlib import Path
 
+import pytest
 import typer
 from typer.testing import CliRunner
 
@@ -45,3 +46,11 @@ def test_pragma_commands_entry_point_loads_cli_app() -> None:
 
     assert lint_entry_point.value == "pragmatiks_lint.cli:app"
     assert lint_entry_point.load() is app
+
+
+def test_run_check_names_the_check_extra_without_semgrep(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify run_check names the ``pragmatiks-lint[check]`` extra when no semgrep executable is on PATH."""
+    monkeypatch.setenv("PATH", str(tmp_path))
+
+    with pytest.raises(RuntimeError, match=r"pragmatiks-lint\[check\]"):
+        run_check([tmp_path])

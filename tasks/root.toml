@@ -48,10 +48,11 @@ extends = "bash"
 run = "pre-commit run --all-files --show-diff-on-failure --hook-stage pre-commit"
 
 ["check:ci"]
-description = "Run the CI gate: Python and JS checks, the pre-commit hooks, and the semgrep rule and lint-check tests"
+description = "Run the CI gate: Python and JS checks, the pre-commit hooks, the semgrep rule and lint-check tests, and the base-install check"
 extends = "bash"
 run = [
   { task = "all:check" },
   { task = "check:pre-commit" },
   { task = "all:test" },
+  { task = "python:check-base" },
 ]

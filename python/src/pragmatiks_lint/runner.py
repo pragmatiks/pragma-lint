@@ -12,6 +12,7 @@ from pragmatiks_lint.findings import Finding
 
 
 Language = Literal["python", "ts", "all"]
+SEMGREP_MISSING_MESSAGE = "semgrep is not installed; install pragmatiks-lint[check] to run the Pragmatiks semgrep rules"
 
 
 def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
@@ -21,7 +22,8 @@ def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
         Structured semgrep findings.
 
     Raises:
-        RuntimeError: If semgrep times out or exits with an infrastructure error.
+        RuntimeError: If the semgrep executable is not installed (it ships with the ``pragmatiks-lint[check]``
+            extra), or if semgrep times out or exits with an infrastructure error.
     """
     with bundled_rules_directory() as rules_directory:
         command = [
@@ -35,6 +37,8 @@ def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
         ]
         try:
             result = subprocess.run(command, capture_output=True, check=False, text=True, timeout=600)
+        except FileNotFoundError as error:
+            raise RuntimeError(SEMGREP_MISSING_MESSAGE) from error
         except subprocess.TimeoutExpired as error:
             raise RuntimeError("semgrep timed out after 600 seconds") from error
 
