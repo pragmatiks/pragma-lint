@@ -12,3 +12,8 @@ repos:
         entry: uv run --frozen --project python python -m pragmatiks_lint.sources
         language: system
         files: (^|/)(pyproject\.toml|package\.json|pnpm-workspace\.yaml)$
+      - id: check-uv-pip
+        name: Reject uv pip in tracked files
+        entry: uv run --frozen --project python python -m pragmatiks_lint.uv_pip
+        language: system
+        exclude: ^python/tests/
