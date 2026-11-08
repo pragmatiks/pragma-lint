@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.11.0 (2026-11-08)
+
+### Features
+
+- **rules**: add Python shape rules from the PRA-703 reviews (PRA-733)
+
 ## python-v0.10.0 (2026-11-08)
 
 ### Features
