@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.10.0 (2026-11-08)
+
+### Features
+
+- **rules**: drop the TS/JS comment semgrep rules the ESLint rules replace (PRA-680)
+
 ## python-v0.9.1 (2026-11-07)
 
 ### Bug Fixes
