@@ -18,6 +18,10 @@
     "./eslint-config/next": {
       "types": "./dist/eslint-config/next/index.d.ts",
       "import": "./dist/eslint-config/next/index.js"
+    },
+    "./eslint-config/css": {
+      "types": "./dist/eslint-config/css/index.d.ts",
+      "import": "./dist/eslint-config/css/index.js"
     }
   },
   "files": [
