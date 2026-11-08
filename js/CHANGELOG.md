@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.10.0 (2026-11-08)
+
+### Features
+
+- **rules**: add Python shape rules from the PRA-703 reviews (PRA-733)
+
 ## js-v0.9.0 (2026-11-08)
 
 ### Features
