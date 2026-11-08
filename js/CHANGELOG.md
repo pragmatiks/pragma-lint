@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.10.1 (2026-11-08)
+
+### Bug Fixes
+
+- **rules**: flag pure-prefix results bound only to _ in pra-pure-call-result-dropped (PRA-733)
+
 ## js-v0.10.0 (2026-11-08)
 
 ### Features
