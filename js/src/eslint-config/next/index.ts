@@ -7,6 +7,7 @@ import css from "@eslint/css";
 import type { ESLint, Linter } from "eslint";
 import reactX from "eslint-plugin-react-x";
 
+import { pragmatiksCssConfig } from "../css/index.js";
 import { pragmatiksConfig } from "../index.js";
 import {
   type DesignSystemSource,
@@ -321,7 +322,8 @@ function buildCssConfig(
 
 /**
  * Builds the flat config for a Next app: the Next presets, the Pragmatiks base config, the
- * frontend rules for JavaScript and TypeScript, a typed leaked-render check, and the CSS rules.
+ * frontend rules for JavaScript and TypeScript, a typed leaked-render check, the CSS rules and the
+ * stylesheet comment ban.
  *
  * Next config objects without `files` are scoped to the glob of the one object that registers
  * `jsx-a11y`; ignore-only objects are kept as they are. The base config's typescript-eslint parser
@@ -353,5 +355,6 @@ export async function pragmatiksNextConfig(
     buildFrontendConfig(accessibilityConfig, plugin, rules),
     buildTypedConfig(options.rootDir),
     buildCssConfig(plugin, rules),
+    pragmatiksCssConfig(),
   ];
 }

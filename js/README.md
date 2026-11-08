@@ -17,7 +17,7 @@ This package has no `bin` entry. Command-line integration belongs in `pragma-cli
 | `eslint-plugin-sonarjs` | `^4.0.0`   |
 | `eslint-plugin-unicorn` | `^64.0.0`  |
 
-**`/eslint-config/next` only** (optional peers; install them when you use `@pragmatiks/lint/eslint-config/next`):
+**`/eslint-config/next` only** (optional peers; install them when you use `@pragmatiks/lint/eslint-config/next`; `/eslint-config/css` needs `@eslint/css` alone):
 
 | Package                 | Range     | Why                                                                  |
 | ----------------------- | --------- | -------------------------------------------------------------------- |
@@ -40,6 +40,28 @@ export default pragmatiksConfig();
 ```
 
 Every object except the global ignores, the sonarjs and unicorn recommended presets included, applies only to `PRAGMATIKS_LINT_FILES` (`**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}`), so the config composes with configs for other languages such as CSS.
+
+### Comment ban (principle 10)
+
+`pragmatiks-comments/no-comments` flags every JavaScript and TypeScript comment except:
+
+- a JSDoc block (`/** ... */`, in JSX `{/** ... */}` too) and a line-1 shebang;
+- a bare tool directive, matched against the whole comment: `eslint-disable`, `eslint-disable-line`, `eslint-disable-next-line` and `eslint-enable` with an optional rule list (`@scope/rule` names, comma separated), `eslint <config>`, `global` / `globals`, `exported`, `@ts-expect-error` and `/// <reference ... />`.
+
+A directive with a `-- description` or other prose is flagged, matching the Python `pragmatiks_lint.comments` check; the rationale belongs in the owning JSDoc. `TODO(PRA-n)` gets no exception. `@typescript-eslint/ban-ts-comment` is set to allow a bare `@ts-expect-error`; `@ts-ignore` and `@ts-nocheck` stay flagged. The rules live in the `pragmatiks-comments` plugin, a name distinct from the `/next` frontend plugin, and the base config registers the `typescript-eslint` plugin instance `eslint-config-next` also registers.
+
+## `@pragmatiks/lint/eslint-config/css`
+
+The stylesheet config, one object for `**/*.css` that parses with `@eslint/css` (optional peer `^2.0.0`) tolerantly and turns on `pragmatiks-comments/css-no-comments`, which flags every CSS comment except a bare ESLint directive:
+
+```ts
+import { pragmatiksConfig } from "@pragmatiks/lint";
+import { pragmatiksCssConfig } from "@pragmatiks/lint/eslint-config/css";
+
+export default [...pragmatiksConfig(), pragmatiksCssConfig()];
+```
+
+`pragmatiksNextConfig` already includes it.
 
 ## `@pragmatiks/lint/eslint-config/next`
 

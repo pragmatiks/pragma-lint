@@ -15,6 +15,7 @@ import {
   MAX_STATEMENTS_OPTS,
   PREVENT_ABBREVIATIONS_OPTS,
 } from "./options.js";
+import { COMMENTS_PLUGIN_NAME, commentsPlugin } from "./rules/plugin.js";
 
 /**
  * The files every Pragmatiks config object applies to: JavaScript and TypeScript, JSX included.
@@ -83,8 +84,12 @@ function recommendedOrThrow(
  * applies only to `PRAGMATIKS_LINT_FILES`, so the config composes with configs for other
  * languages such as CSS.
  *
+ * Note: `@typescript-eslint/ban-ts-comment` allows a bare `@ts-expect-error`, since
+ * `no-comments` refuses a directive with a description; the plugin is the `typescript-eslint`
+ * instance `eslint-config-next` registers, so the two compose.
+ *
  * @returns The flat config: the typescript-eslint parser, the sonarjs and unicorn recommended
- *   presets, the Pragmatiks size and naming rules, and global ignores for build output.
+ *   presets, the Pragmatiks size, naming and comment rules, and global ignores for build output.
  * @throws Error when the package root cannot be found, or when sonarjs or unicorn has no
  *   recommended flat config.
  */
@@ -115,7 +120,16 @@ export function pragmatiksConfig() {
     }),
     {
       files: PRAGMATIKS_LINT_FILES,
+      plugins: {
+        "@typescript-eslint": tseslint.plugin,
+        [COMMENTS_PLUGIN_NAME]: commentsPlugin,
+      },
       rules: {
+        [`${COMMENTS_PLUGIN_NAME}/no-comments`]: "error",
+        "@typescript-eslint/ban-ts-comment": [
+          "error",
+          { "ts-expect-error": false },
+        ],
         complexity: ["error", COMPLEXITY_OPTS],
         "max-lines-per-function": ["error", MAX_LINES_PER_FUNCTION_OPTS],
         "max-statements": ["error", MAX_STATEMENTS_OPTS],
