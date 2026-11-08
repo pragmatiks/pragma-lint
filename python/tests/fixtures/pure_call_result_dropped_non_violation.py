@@ -14,4 +14,7 @@ async def use_results(wheel: Any, path: Any, parser: Any, future: Any, tools: An
     tools.build_message(wheel).send()
     parser.parse_args()
     future.exception()
-    return result, message, values
+    _, digest = tools.parse_pair(wheel)
+    _ = parser.parse_args()
+    _ = tools.build_message(wheel)
+    return result, message, values, digest

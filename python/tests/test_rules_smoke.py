@@ -92,7 +92,7 @@ def test_pure_prefix_mismatch_ignores_pure_functions() -> None:
 ShapeRuleCase = tuple[str, str, frozenset[int]]
 
 SHAPE_RULE_CASES: tuple[ShapeRuleCase, ...] = (
-    ("pra-pure-call-result-dropped", "pure_call_result_dropped", frozenset({5, 6, 7, 8})),
+    ("pra-pure-call-result-dropped", "pure_call_result_dropped", frozenset({5, 6, 7, 8, 12, 13, 14})),
     ("pra-parsed-result-index", "parsed_result_index", frozenset({5, 6})),
     ("pra-if-chain-else-continue", "if_chain_else_continue", frozenset({9})),
     ("pra-exists-gated-read", "exists_gated_read", frozenset({5})),
