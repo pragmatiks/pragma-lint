@@ -1,5 +1,12 @@
 # Changelog
 
+## js-v0.9.0 (2026-11-08)
+
+### Features
+
+- **rules**: drop the TS/JS comment semgrep rules the ESLint rules replace (PRA-680)
+- **js**: add the no-comments and css-no-comments ESLint rules (PRA-680)
+
 ## js-v0.8.0 (2026-11-07)
 
 ### Features
