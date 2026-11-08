@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.11.1 (2026-11-08)
+
+### Bug Fixes
+
+- **rules**: flag pure-prefix results bound only to _ in pra-pure-call-result-dropped (PRA-733)
+
 ## python-v0.11.0 (2026-11-08)
 
 ### Features
