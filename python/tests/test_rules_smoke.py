@@ -87,3 +87,27 @@ def test_pure_prefix_mismatch_flags_every_io_function() -> None:
 def test_pure_prefix_mismatch_ignores_pure_functions() -> None:
     """Verify pure-prefixed functions without I/O, including one awaiting a coroutine, are not flagged."""
     assert find_rule_lines("pure_prefix_mismatch_non_violation.py", "pra-pure-prefix-mismatch") == set()
+
+
+ShapeRuleCase = tuple[str, str, frozenset[int]]
+
+SHAPE_RULE_CASES: tuple[ShapeRuleCase, ...] = (
+    ("pra-pure-call-result-dropped", "pure_call_result_dropped", frozenset({5, 6, 7, 8})),
+    ("pra-parsed-result-index", "parsed_result_index", frozenset({5, 6})),
+    ("pra-if-chain-else-continue", "if_chain_else_continue", frozenset({9})),
+    ("pra-exists-gated-read", "exists_gated_read", frozenset({5})),
+    ("pra-multi-underscore-unpack", "multi_underscore_unpack", frozenset({5, 6})),
+    ("pra-optional-tuple-index", "optional_tuple_index", frozenset({5, 6, 7, 8, 9})),
+)
+
+
+@pytest.mark.parametrize(("rule_id", "fixture_stem", "expected_lines"), SHAPE_RULE_CASES)
+def test_shape_rule_flags_every_violation(rule_id: str, fixture_stem: str, expected_lines: frozenset[int]) -> None:
+    """Verify each Python shape rule flags every violating line of its fixture."""
+    assert find_rule_lines(f"{fixture_stem}_violation.py", rule_id) == expected_lines
+
+
+@pytest.mark.parametrize(("rule_id", "fixture_stem"), [(rule_id, stem) for rule_id, stem, _ in SHAPE_RULE_CASES])
+def test_shape_rule_ignores_accepted_shapes(rule_id: str, fixture_stem: str) -> None:
+    """Verify each Python shape rule leaves the accepted shapes in its non-violation fixture alone."""
+    assert find_rule_lines(f"{fixture_stem}_non_violation.py", rule_id) == set()

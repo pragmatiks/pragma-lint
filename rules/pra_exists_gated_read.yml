@@ -1,0 +1,14 @@
+rules:
+  - id: pra-exists-gated-read
+    patterns:
+      - pattern: $READ if $PATH.exists() else None
+      - metavariable-pattern:
+          metavariable: $READ
+          pattern-either:
+            - pattern: <... $FILE.read_text(...) ...>
+            - pattern: <... $FILE.read_bytes(...) ...>
+            - pattern: <... $FILE.open(...) ...>
+            - pattern: <... open(...) ...>
+    message: "principle #9 an existence check folded into a read ternary hides the absent case. Return None in a guard clause first, then read."
+    severity: WARNING
+    languages: [python]

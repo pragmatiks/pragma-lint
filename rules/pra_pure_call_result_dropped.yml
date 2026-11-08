@@ -1,0 +1,16 @@
+rules:
+  - id: pra-pure-call-result-dropped
+    patterns:
+      - pattern-regex: '(?m)^[ \t]*(?:await[ \t]+)?(?:(?:self|cls)\.)?(?:compute|build|derive|format|parse|extract)_\w+\((?![^\n]*\)[ \t]*[.\[])(?:[^\n]*[(),])?[ \t]*$'
+      - pattern-not-inside: $CALL(...)
+      - pattern-not-inside: "[...]"
+      - pattern-not-inside: "{...}"
+      - pattern-not-inside: "(...)"
+      - pattern-not-inside: '"..."'
+      - pattern-not-inside: $TARGET = $VALUE
+      - pattern-not-inside: "$TARGET: $TYPE = $VALUE"
+    message: "principle #7 a compute, build, derive, format, parse or extract function is pure, so a call whose result is dropped does nothing. Use the result, or call the function that performs the side effect."
+    severity: WARNING
+    languages: [python]
+    metadata:
+      note: "Matches a call statement that opens its own line, so a call used as an argument, element, assignment value or chained receiver is not flagged. Principle #7 makes these prefixes pure; a result consumed only to raise on bad input belongs in a validate function that says so."

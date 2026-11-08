@@ -1,0 +1,6 @@
+rules:
+  - id: pra-multi-underscore-unpack
+    pattern: "..., _, ..., _, ... = $VALUE[$KEY]"
+    message: "principle #9 unpacking a subscript into two or more _ placeholders hides the shape of the record. Read the parts by name: a named record, a dataclass or attribute access."
+    severity: WARNING
+    languages: [python]

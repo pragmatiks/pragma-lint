@@ -1,0 +1,14 @@
+rules:
+  - id: pra-if-chain-else-continue
+    pattern: |
+      if $FIRST:
+          $NAME = $FIRST_VALUE
+      elif $SECOND:
+          $NAME = $SECOND_VALUE
+      else:
+          continue
+    message: "principle #9 an if/elif chain that assigns one name in every branch and ends in else: continue hides a value lookup in the loop body. Move the chain into a helper that returns the value or None, and continue on None."
+    severity: WARNING
+    languages: [python]
+    metadata:
+      note: "The pattern matches the last two assigning branches, so a chain of any length is reported once at its final elif."
