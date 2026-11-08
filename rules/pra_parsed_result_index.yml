@@ -1,0 +1,15 @@
+rules:
+  - id: pra-parsed-result-index
+    patterns:
+      - pattern-either:
+          - pattern: $FUNCTION(...)[$INDEX]
+          - pattern: $OBJECT.$FUNCTION(...)[$INDEX]
+      - metavariable-regex:
+          metavariable: $FUNCTION
+          regex: '^(parse|extract)_\w+$'
+      - metavariable-regex:
+          metavariable: $INDEX
+          regex: '^-?\d+$'
+    message: "principle #9 a literal index into a parse or extract result hides which part is meant. Unpack the result into named locals, or return a named record."
+    severity: WARNING
+    languages: [python]

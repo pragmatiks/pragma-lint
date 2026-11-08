@@ -1,0 +1,23 @@
+rules:
+  - id: pra-optional-tuple-index
+    pattern-either:
+      - pattern: $FIRST, $SECOND = $CALL(...) or ($FIRST_DEFAULT, $SECOND_DEFAULT)
+      - patterns:
+          - pattern-either:
+              - pattern: $TUPLE is None or <... $TUPLE[$INDEX] ...>
+              - pattern: $TUPLE is not None and <... $TUPLE[$INDEX] ...>
+              - patterns:
+                  - pattern-inside: |
+                      def $FUNCTION(...):
+                          ...
+                          <... $TUPLE[$FIRST_INDEX] if $TUPLE else $FIRST_DEFAULT ...>
+                          ...
+                          <... $TUPLE[$SECOND_INDEX] if $TUPLE else $SECOND_DEFAULT ...>
+                          ...
+                  - pattern: $TUPLE[$INDEX] if $TUPLE else $DEFAULT
+          - metavariable-regex:
+              metavariable: $INDEX
+              regex: '^-?\d+$'
+    message: "principle #9 indexing an optional tuple under a None test mixes the absent case with positional access. Return on None in a guard clause, then unpack once into named locals."
+    severity: WARNING
+    languages: [python]
