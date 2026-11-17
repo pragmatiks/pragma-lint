@@ -53,7 +53,7 @@ Use mise tasks (`mise tasks` lists them all):
 
 ## Testing
 
-Run `mise run python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments`, `pragmatiks_lint.sources` and `pragmatiks_lint.uv_pip` check tests, and `mise run js:test` for eslint config integration coverage. This repository has no e2e suite.
+Run `mise run python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments`, `pragmatiks_lint.sources` and `pragmatiks_lint.uv_pip` check tests, and `mise run js:test` for eslint config integration coverage.
 
 ## Dependency Policy
 
