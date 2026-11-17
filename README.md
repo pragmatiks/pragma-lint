@@ -42,4 +42,3 @@ From the PRA-703 reviews (PRA-733):
 - **`return` inside `with` followed by a duplicate `return`**: a one-off shape with no occurrences to justify a rule.
 - **`None` passed positionally to an `X | None` parameter**: needs the callee's signature types, which semgrep cannot see and ty does not check.
 - **Comprehension with two or more `for` clauses**: semgrep matches comprehension clauses exactly, so a rule needs one pattern per clause count, `if` position and `async` combination and still misses longer forms.
-- **Linter for the e2e TypeScript suite**: not a pattern rule; adopting `@pragmatiks/lint` there is tracked as its own issue.
