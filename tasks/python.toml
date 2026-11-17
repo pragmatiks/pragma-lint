@@ -28,7 +28,7 @@ run = [
 ]
 
 ["python:test"]
-description = "Run Python rule smoke tests, comment-check tests and source-check tests"
+description = "Run Python rule smoke tests and the comment-check, source-check, uv pip-check and pragma lint command tests"
 extends = "bash"
 dir = "python"
 depends = ["python:vendor-rules"]

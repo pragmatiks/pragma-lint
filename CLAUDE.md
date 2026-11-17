@@ -40,7 +40,7 @@ Use mise tasks (`mise tasks` lists them all):
 | `mise run check:toolchain-scripts` | Fail when a shared toolchain script under `scripts/tasks/` or the git hook `scripts/git_hooks/hook.sh` differs from the public repositories' copies (same-named branch, else `main`) |
 | `mise run python:install` | Install Python dependencies |
 | `mise run python:check` | Ruff and mypy |
-| `mise run python:test` | Python rule smoke tests, comment-check tests and source-check tests |
+| `mise run python:test` | Python rule smoke tests and the comment-check, source-check, `uv pip`-check and `pragma lint` command tests |
 | `mise run python:build` | Build wheel and sdist |
 | `mise run python:check-base` | Prove the wheel's base install has no semgrep, typer or rich and runs every hook module |
 | `mise run js:install` | Install JS dependencies |
@@ -53,7 +53,7 @@ Use mise tasks (`mise tasks` lists them all):
 
 ## Testing
 
-Run `mise run python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments`, `pragmatiks_lint.sources` and `pragmatiks_lint.uv_pip` check tests, and `mise run js:test` for eslint config integration coverage.
+Run `mise run python:test` for Python semgrep smoke coverage and the `pragmatiks_lint.comments`, `pragmatiks_lint.sources` and `pragmatiks_lint.uv_pip` check tests and the `pragma lint` command tests, and `mise run js:test` for eslint config integration coverage.
 
 ## Dependency Policy
 
