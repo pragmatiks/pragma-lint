@@ -6,7 +6,7 @@
 import { Linter } from "eslint";
 import { describe, expect, it } from "vitest";
 
-import { pragmatiksUnitTestConfig } from "../src/eslint-config/unit-tests/index.js";
+import { pragmatiksUnitTestConfig } from "../src/eslint-config/unit-test/index.js";
 
 const UNIT_FILE = "tests/unit/decision.test.ts";
 
@@ -20,6 +20,7 @@ const UNIT_FILE = "tests/unit/decision.test.ts";
 function ruleIds(code: string, filename = UNIT_FILE): (string | null)[] {
   const linter = new Linter({ configType: "flat" });
   const config = [{ files: ["**/*.ts"] }, pragmatiksUnitTestConfig()];
+
   return linter.verify(code, config, { filename }).map((message) => message.ruleId);
 }
 
@@ -33,6 +34,13 @@ describe("pragmatiksUnitTestConfig", () => {
     ["child_process", 'import { exec } from "child_process";', "no-restricted-imports"],
     ["fetch", 'fetch("/api");', "no-restricted-globals"],
     ["process", "process.env.HOME;", "no-restricted-globals"],
+    ["node:process", 'import { env } from "node:process";', "no-restricted-imports"],
+    ["dns", 'import { lookup } from "node:dns";', "no-restricted-imports"],
+    ["globalThis.fetch", 'globalThis.fetch("/api");', "no-restricted-properties"],
+    ["window.fetch", 'window.fetch("/api");', "no-restricted-properties"],
+    ["Next forwardRef import", 'import { forwardRef } from "react";', "no-restricted-imports"],
+    ["Next icon family", 'import { X } from "lucide-react";', "no-restricted-imports"],
+    ["Next React.forwardRef", "React.forwardRef(() => null);", "no-restricted-properties"],
   ])("bans %s", (_name, code, rule) => {
     expect(ruleIds(code)).toEqual([rule]);
   });

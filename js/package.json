@@ -23,9 +23,9 @@
       "types": "./dist/eslint-config/css/index.d.ts",
       "import": "./dist/eslint-config/css/index.js"
     },
-    "./eslint-config/unit-tests": {
-      "types": "./dist/eslint-config/unit-tests/index.d.ts",
-      "import": "./dist/eslint-config/unit-tests/index.js"
+    "./eslint-config/unit-test": {
+      "types": "./dist/eslint-config/unit-test/index.d.ts",
+      "import": "./dist/eslint-config/unit-test/index.js"
     }
   },
   "files": [

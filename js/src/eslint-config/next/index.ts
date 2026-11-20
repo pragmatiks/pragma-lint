@@ -9,6 +9,7 @@ import reactX from "eslint-plugin-react-x";
 
 import { pragmatiksCssConfig } from "../css/index.js";
 import { pragmatiksConfig } from "../index.js";
+import { NEXT_RESTRICTED_IMPORTS, NEXT_RESTRICTED_PROPERTIES } from "./restricted.js";
 import {
   type DesignSystemSource,
   type DesignSystemView,
@@ -45,8 +46,6 @@ const TYPED_FILES = ["**/*.{ts,tsx,mts}"];
 const THREE_DOTS_PATTERN = String.raw`/[A-Za-z]\.\.\./`;
 const ELLIPSIS_MESSAGE = "Write the ellipsis glyph … instead of three dots.";
 const ZOOM_MESSAGE = "Never disable zoom in the viewport export.";
-const FORWARD_REF_MESSAGE =
-  "Pass ref as a prop; React 19 does not need forwardRef.";
 const URL_ATTRIBUTE = String.raw`JSXAttribute[name.name=/^(href|src|action)$/]`;
 const ELLIPSIS_EXEMPT_LITERAL = [
   `${URL_ATTRIBUTE} Literal`,
@@ -57,19 +56,6 @@ const ELLIPSIS_EXEMPT_LITERAL = [
 ].join(", ");
 const PRESET_RECOVERY =
   "To fix it, pass [...nextVitals, ...nextTs] from eslint-config-next";
-const ICON_FAMILY = "@phosphor-icons/react";
-const ICON_PACKAGES = [
-  "lucide-react",
-  "react-icons",
-  "react-icons/*",
-  "@heroicons/*",
-  "@tabler/icons-react",
-  "@radix-ui/react-icons",
-  "react-feather",
-  "@fortawesome/*",
-  "@mui/icons-material",
-  "@mui/icons-material/*",
-];
 
 const RESTRICTED_SYNTAX = [
   {
@@ -106,27 +92,6 @@ const RESTRICTED_SYNTAX = [
   },
 ];
 
-const RESTRICTED_IMPORTS = {
-  paths: [
-    {
-      name: "react",
-      importNames: ["forwardRef"],
-      message: FORWARD_REF_MESSAGE,
-    },
-  ],
-  patterns: [
-    {
-      group: ICON_PACKAGES,
-      message: `Use ${ICON_FAMILY}, the project's one icon family.`,
-    },
-  ],
-};
-
-const RESTRICTED_PROPERTIES = {
-  object: "React",
-  property: "forwardRef",
-  message: FORWARD_REF_MESSAGE,
-};
 
 /**
  * Where the Next app lives and which stylesheet is its Tailwind entry point.
@@ -272,8 +237,8 @@ function buildFrontendConfig(
       ...buildAccessibilityRules(accessibilityConfig),
       ...buildRuleEntries(Object.keys(rules.javascript)),
       "no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX],
-      "no-restricted-imports": ["error", RESTRICTED_IMPORTS],
-      "no-restricted-properties": ["error", RESTRICTED_PROPERTIES],
+      "no-restricted-imports": ["error", NEXT_RESTRICTED_IMPORTS],
+      "no-restricted-properties": ["error", NEXT_RESTRICTED_PROPERTIES],
       "no-alert": "error",
       "unicorn/filename-case": ["error", FILENAME_CASE_OPTIONS],
       "unicorn/no-useless-undefined": ["error", NO_USELESS_UNDEFINED_OPTIONS],
