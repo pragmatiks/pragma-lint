@@ -63,6 +63,17 @@ export default [...pragmatiksConfig(), pragmatiksCssConfig()];
 
 `pragmatiksNextConfig` already includes it.
 
+## `@pragmatiks/lint/eslint-config/unit-tests`
+
+The unit-test config, one object for `tests/unit/**` that bans the vi mock, stub and fake-timer helpers (`vi.mock`, `vi.doMock`, `vi.spyOn`, `vi.fn`, `vi.stubGlobal`, `vi.stubEnv`, `vi.useFakeTimers`, `vi.setSystemTime`), `msw`, the Node I/O modules (`fs`, `fs/promises`, `child_process`, `net`, `http`, `https`, `dgram`, `worker_threads`, bare and `node:`) and the globals `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and `process`. Unit tests cover pure decisions with real inputs. It sets `no-restricted-properties`, `no-restricted-imports` and `no-restricted-globals` for those files, so place it after any config that sets them. Pass other globs to move it:
+
+```ts
+import { pragmatiksConfig } from "@pragmatiks/lint";
+import { pragmatiksUnitTestConfig } from "@pragmatiks/lint/eslint-config/unit-tests";
+
+export default [...pragmatiksConfig(), pragmatiksUnitTestConfig()];
+```
+
 ## `@pragmatiks/lint/eslint-config/next`
 
 In the app's `eslint.config.mjs`:
