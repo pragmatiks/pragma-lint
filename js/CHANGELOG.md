@@ -1,5 +1,16 @@
 # Changelog
 
+## js-v0.12.0 (2026-11-20)
+
+### Bug Fixes
+
+- **js**: compose the unit-test bans with the consumer's base config and ban require() and import() of I/O modules (PRA-1002)
+- **js**: keep the Next bans in the unit-test config and close its I/O gaps (PRA-1002)
+
+### Features
+
+- **js**: export the unit-test bans as pragmatiksUnitTestConfig (PRA-1002)
+
 ## js-v0.11.0 (2026-11-20)
 
 ### Features
