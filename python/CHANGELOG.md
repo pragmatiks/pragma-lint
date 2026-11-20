@@ -8,6 +8,13 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.12.1 (2026-11-20)
+
+### Bug Fixes
+
+- **python**: keep default and consumer semgrepignore entries while scanning tests
+- **python**: scan tests directories whatever semgrepignore a repository has
+
 ## python-v0.12.0 (2026-11-20)
 
 ### Features
