@@ -12,11 +12,21 @@ from pragmatiks_lint.findings import Finding
 
 
 Language = Literal["python", "ts", "all"]
+ALWAYS_EXCLUDED_DIRECTORIES = ("node_modules", ".venv")
 SEMGREP_MISSING_MESSAGE = "semgrep is not installed; install pragmatiks-lint[check] to run the Pragmatiks semgrep rules"
 
 
 def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
     """Run bundled semgrep rules against paths.
+
+    Every ``.semgrepignore`` file is bypassed, and with it semgrep's default ignore list (which skips every
+    ``tests/`` directory), so test code is always scanned whatever ignore file a repository has or lacks.
+    ``node_modules`` and ``.venv`` stay excluded, and gitignored files stay out through semgrep's git filter.
+
+    Note:
+        ``--x-ignore-semgrepignore-files`` is the only semgrep switch that replaces the default ignore list
+        from the command line; semgrep labels it internal, so the ``semgrep`` floor in ``pyproject.toml`` names
+        a version verified to support it.
 
     Returns:
         Structured semgrep findings.
@@ -32,6 +42,8 @@ def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
             str(rules_directory),
             "--json",
             "--quiet",
+            "--x-ignore-semgrepignore-files",
+            *exclude_arguments(),
             *language_includes(language),
             *[str(path) for path in paths],
         ]
@@ -50,6 +62,11 @@ def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
     if not isinstance(findings, list):
         return []
     return [parse_finding(item) for item in findings if isinstance(item, dict)]
+
+
+def exclude_arguments() -> list[str]:
+    """Return semgrep exclude arguments for the directories never scanned."""
+    return [argument for directory in ALWAYS_EXCLUDED_DIRECTORIES for argument in ("--exclude", directory)]
 
 
 def language_includes(language: Language) -> list[str]:
