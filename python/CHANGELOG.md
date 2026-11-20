@@ -8,6 +8,12 @@
 - Added library-only npm package `@pragmatiks/lint`.
 - Added build-time rule vendoring for both package artifacts.
 
+## python-v0.12.0 (2026-11-20)
+
+### Features
+
+- **rules**: ban monkeypatch and mocker fixtures in tests (PRA-997)
+
 ## python-v0.11.1 (2026-11-08)
 
 ### Bug Fixes
