@@ -5,7 +5,22 @@
  */
 import type { Linter } from "eslint";
 
-import { NEXT_RESTRICTED_IMPORTS, NEXT_RESTRICTED_PROPERTIES } from "../next/restricted.js";
+type RestrictedImportPath = { name: string; message: string; importNames?: string[] };
+
+type RestrictedImportPattern = { group: string[]; message: string };
+
+type RestrictedProperty = { object: string; property: string; message: string };
+
+type RestrictedSyntax = { selector: string; message: string };
+
+/**
+ * The restricted lists of the base config a consumer uses, which the unit-test config keeps.
+ */
+export interface InheritedBans {
+  readonly imports?: { paths: RestrictedImportPath[]; patterns: RestrictedImportPattern[] };
+  readonly properties?: RestrictedProperty[];
+  readonly syntax?: RestrictedSyntax[];
+}
 
 /**
  * The files the unit-test config applies to by default.
@@ -47,21 +62,33 @@ const BANNED_GLOBALS = ["fetch", "XMLHttpRequest", "WebSocket", "EventSource", "
 
 const GLOBAL_OBJECTS = ["globalThis", "window", "self"];
 
+const SLASH = String.raw`\u002F`;
+
+const MODULE_PATTERN = `/^((node:)?(${BANNED_NODE_MODULES.map((module) => module.replace("/", SLASH)).join("|")})|msw(${SLASH}.*)?)$/`;
+
+const DYNAMIC_LOAD_SYNTAX = [
+  {
+    selector: `CallExpression[callee.name="require"] > Literal.arguments[value=${MODULE_PATTERN}]`,
+    message: IO_MESSAGE,
+  },
+  { selector: `ImportExpression > Literal.source[value=${MODULE_PATTERN}]`, message: IO_MESSAGE },
+];
+
 /**
  * Builds the flat config object that bans vi mock, stub and fake-timer helpers, msw,
- * Node I/O modules and network globals in unit tests, keeping the Next config's import and
- * property bans, since a later flat config replaces a rule's options.
+ * Node I/O modules (static, `require()` and `import()`) and network globals in unit tests.
  *
- * @returns The config object with `no-restricted-properties`, `no-restricted-imports` and `no-restricted-globals` set.
+ * @param inherited - The base config's restricted lists to keep, since a later flat config replaces a rule's options; `pragmatiksNextUnitTestConfig` passes the Next ones.
+ * @returns The config object with the `no-restricted-*` rules set.
  */
-export function pragmatiksUnitTestConfig(): Linter.Config {
+export function pragmatiksUnitTestConfig(inherited: InheritedBans = {}): Linter.Config {
   return {
     name: "pragmatiks/unit-test",
     files: PRAGMATIKS_UNIT_TEST_FILES,
     rules: {
       "no-restricted-properties": [
         "error",
-        NEXT_RESTRICTED_PROPERTIES,
+        ...(inherited.properties ?? []),
         ...BANNED_VI_PROPERTIES.map((property) => ({ object: "vi", property, message: MOCK_MESSAGE })),
         ...GLOBAL_OBJECTS.flatMap((object) =>
           BANNED_GLOBALS.map((property) => ({ object, property, message: IO_MESSAGE })),
@@ -71,16 +98,17 @@ export function pragmatiksUnitTestConfig(): Linter.Config {
         "error",
         {
           paths: [
-            ...NEXT_RESTRICTED_IMPORTS.paths,
+            ...(inherited.imports?.paths ?? []),
             { name: "msw", message: MOCK_MESSAGE },
             ...BANNED_NODE_MODULES.flatMap((module) => [
               { name: module, message: IO_MESSAGE },
               { name: `node:${module}`, message: IO_MESSAGE },
             ]),
           ],
-          patterns: [...NEXT_RESTRICTED_IMPORTS.patterns, { group: ["msw/*"], message: MOCK_MESSAGE }],
+          patterns: [...(inherited.imports?.patterns ?? []), { group: ["msw/*"], message: MOCK_MESSAGE }],
         },
       ],
+      "no-restricted-syntax": ["error", ...(inherited.syntax ?? []), ...DYNAMIC_LOAD_SYNTAX],
       "no-restricted-globals": ["error", ...BANNED_GLOBALS.map((name) => ({ name, message: IO_MESSAGE }))],
     },
   };
