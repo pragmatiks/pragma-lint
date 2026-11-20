@@ -297,7 +297,7 @@ module.exports = db;
 
 describe("entry points and key mapping", () => {
   it("exports pragmatiksNextConfig and pragmatiksNextUnitTestConfig from /next", () => {
-    expect(Object.keys(nextEntry).sort()).toEqual(["pragmatiksNextConfig", "pragmatiksNextUnitTestConfig"]);
+    expect(Object.keys(nextEntry).toSorted()).toEqual(["pragmatiksNextConfig", "pragmatiksNextUnitTestConfig"]);
   });
 
   it("keeps pragmatiksConfig on the root entry", () => {
