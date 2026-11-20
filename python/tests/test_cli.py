@@ -56,15 +56,16 @@ def test_run_check_names_the_check_extra_without_semgrep(tmp_path: Path, monkeyp
         run_check([tmp_path])
 
 
-def test_run_check_scans_tests_directories(tmp_path: Path) -> None:
-    """Verify run_check scans a ``tests/`` directory even when a ``.semgrepignore`` lists it."""
+def test_run_check_scans_tests_directories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify run_check scans test directories a ``.semgrepignore`` lists and honors its other entries."""
     source = (Path(__file__).parent / "fixtures" / "srp_violation.py").read_text()
-    for directory in ("tests", "node_modules", ".venv"):
+    for directory in ("tests", "test", "generated", "src", "build", "node_modules", ".venv"):
         (tmp_path / directory).mkdir()
         (tmp_path / directory / "srp_violation.py").write_text(source)
-    (tmp_path / ".semgrepignore").write_text("tests/\n")
+    (tmp_path / ".semgrepignore").write_text("tests/\n/test\ngenerated/\n")
+    monkeypatch.chdir(tmp_path)
 
     scanned = {Path(finding.path).parent.name for finding in run_check([tmp_path], language="python")}
 
-    assert "tests" in scanned
-    assert scanned.isdisjoint({"node_modules", ".venv"})
+    assert {"tests", "test", "src"} <= scanned
+    assert scanned.isdisjoint({"generated", "build", "node_modules", ".venv"})

@@ -12,21 +12,35 @@ from pragmatiks_lint.findings import Finding
 
 
 Language = Literal["python", "ts", "all"]
-ALWAYS_EXCLUDED_DIRECTORIES = ("node_modules", ".venv")
+DEFAULT_EXCLUDED_PATTERNS = (
+    "_darcs",
+    "build/",
+    "vendor/",
+    "*.min.js",
+    "node_modules/",
+    ".yarn/",
+    ".venv/",
+    "_opam/",
+    "_build/",
+    "_cargo/",
+)
+TEST_DIRECTORY_NAMES = frozenset({"tests", "test", "testsuite"})
 SEMGREP_MISSING_MESSAGE = "semgrep is not installed; install pragmatiks-lint[check] to run the Pragmatiks semgrep rules"
 
 
 def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
     """Run bundled semgrep rules against paths.
 
-    Every ``.semgrepignore`` file is bypassed, and with it semgrep's default ignore list (which skips every
-    ``tests/`` directory), so test code is always scanned whatever ignore file a repository has or lacks.
-    ``node_modules`` and ``.venv`` stay excluded, and gitignored files stay out through semgrep's git filter.
+    Test directories (``tests/``, ``test/``, ``testsuite/``) are always scanned. Every ``.semgrepignore`` file is
+    bypassed, and the ignore policy is rebuilt as ``--exclude`` arguments: semgrep's default ignore list without
+    its test entries, plus the entries of the ``.semgrepignore`` in the current working directory, except any
+    entry naming a test directory, a negation (``!``) or a directive (``:include``). Gitignored files stay out
+    through semgrep's git filter.
 
     Note:
-        ``--x-ignore-semgrepignore-files`` is the only semgrep switch that replaces the default ignore list
-        from the command line; semgrep labels it internal, so the ``semgrep`` floor in ``pyproject.toml`` names
-        a version verified to support it.
+        ``--x-ignore-semgrepignore-files`` is the only semgrep switch that drops the default ignore list from
+        the command line, and semgrep labels it internal. ``DEFAULT_EXCLUDED_PATTERNS`` mirrors the default
+        list of the ``semgrep`` floor in ``pyproject.toml``; a semgrep upgrade re-checks both.
 
     Returns:
         Structured semgrep findings.
@@ -43,7 +57,7 @@ def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
             "--json",
             "--quiet",
             "--x-ignore-semgrepignore-files",
-            *exclude_arguments(),
+            *exclude_arguments(read_semgrepignore(Path(".semgrepignore"))),
             *language_includes(language),
             *[str(path) for path in paths],
         ]
@@ -64,9 +78,38 @@ def run_check(paths: list[Path], language: Language = "all") -> list[Finding]:
     return [parse_finding(item) for item in findings if isinstance(item, dict)]
 
 
-def exclude_arguments() -> list[str]:
-    """Return semgrep exclude arguments for the directories never scanned."""
-    return [argument for directory in ALWAYS_EXCLUDED_DIRECTORIES for argument in ("--exclude", directory)]
+def read_semgrepignore(path: Path) -> str:
+    """Read a ``.semgrepignore`` file.
+
+    Returns:
+        The file's text, or an empty string when it does not exist.
+    """
+    try:
+        return path.read_text()
+    except FileNotFoundError:
+        return ""
+
+
+def parse_semgrepignore(text: str) -> list[str]:
+    """Return the ``.semgrepignore`` patterns the runner honors.
+
+    Blank lines, comments, negations, directives and patterns with a test directory segment are dropped.
+    """
+    patterns = [line.strip() for line in text.splitlines()]
+    return [
+        pattern for pattern in patterns if pattern and pattern[0] not in "#!:" and not names_test_directory(pattern)
+    ]
+
+
+def names_test_directory(pattern: str) -> bool:
+    """Return whether a gitignore-style pattern has a test directory segment."""
+    return any(segment in TEST_DIRECTORY_NAMES for segment in pattern.split("/"))
+
+
+def exclude_arguments(semgrepignore_text: str) -> list[str]:
+    """Return semgrep exclude arguments for the default ignores and a consumer's ``.semgrepignore`` text."""
+    patterns = [*DEFAULT_EXCLUDED_PATTERNS, *parse_semgrepignore(semgrepignore_text)]
+    return [argument for pattern in patterns for argument in ("--exclude", pattern)]
 
 
 def language_includes(language: Language) -> list[str]:
