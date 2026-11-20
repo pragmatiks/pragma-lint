@@ -63,13 +63,13 @@ export default [...pragmatiksConfig(), pragmatiksCssConfig()];
 
 `pragmatiksNextConfig` already includes it.
 
-## `@pragmatiks/lint/eslint-config/unit-tests`
+## `@pragmatiks/lint/eslint-config/unit-test`
 
-The unit-test config, one object for `tests/unit/**` that bans the vi mock, stub and fake-timer helpers (`vi.mock`, `vi.doMock`, `vi.spyOn`, `vi.fn`, `vi.stubGlobal`, `vi.stubEnv`, `vi.useFakeTimers`, `vi.setSystemTime`), `msw`, the Node I/O modules (`fs`, `fs/promises`, `child_process`, `net`, `http`, `https`, `dgram`, `worker_threads`, bare and `node:`) and the globals `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and `process`. Unit tests cover pure decisions with real inputs. It sets `no-restricted-properties`, `no-restricted-imports` and `no-restricted-globals` for those files, so place it after any config that sets them. Pass other globs to move it:
+The unit-test config, one object for `tests/unit/**` that bans the vi mock, stub and fake-timer helpers (`vi.mock`, `vi.doMock`, `vi.spyOn`, `vi.fn`, `vi.stubGlobal`, `vi.stubEnv`, `vi.useFakeTimers`, `vi.setSystemTime`), `msw`, the Node I/O modules (`fs`, `fs/promises`, `child_process`, `net`, `http`, `https`, `http2`, `dgram`, `dns`, `tls`, `process`, `worker_threads`, bare and `node:`) and the globals `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and `process`, bare or through `globalThis`, `window` or `self`. Unit tests cover pure decisions with real inputs. It sets `no-restricted-properties`, `no-restricted-imports` and `no-restricted-globals` for those files, so place it last; it keeps the `/next` config's import and property bans, which a later config would otherwise replace:
 
 ```ts
 import { pragmatiksConfig } from "@pragmatiks/lint";
-import { pragmatiksUnitTestConfig } from "@pragmatiks/lint/eslint-config/unit-tests";
+import { pragmatiksUnitTestConfig } from "@pragmatiks/lint/eslint-config/unit-test";
 
 export default [...pragmatiksConfig(), pragmatiksUnitTestConfig()];
 ```

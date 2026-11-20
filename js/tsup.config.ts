@@ -6,7 +6,7 @@ export default defineConfig({
     "src/eslint-config/index.ts",
     "src/eslint-config/next/index.ts",
     "src/eslint-config/css/index.ts",
-    "src/eslint-config/unit-tests/index.ts",
+    "src/eslint-config/unit-test/index.ts",
   ],
   format: ["esm"],
   dts: true,
