@@ -98,6 +98,7 @@ SHAPE_RULE_CASES: tuple[ShapeRuleCase, ...] = (
     ("pra-exists-gated-read", "exists_gated_read", frozenset({5})),
     ("pra-multi-underscore-unpack", "multi_underscore_unpack", frozenset({5, 6})),
     ("pra-optional-tuple-index", "optional_tuple_index", frozenset({5, 6, 7, 8, 9})),
+    ("pra-no-test-double-fixture", "no_test_double_fixture", frozenset({6, 7, 10, 14, 18, 22, 27, 33})),
 )
 
 
