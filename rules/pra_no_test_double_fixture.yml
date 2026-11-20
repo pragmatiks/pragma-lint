@@ -1,0 +1,16 @@
+rules:
+  - id: pra-no-test-double-fixture
+    patterns:
+      - pattern-either:
+          - pattern: "def $FUNCTION(..., $NAME, ...): ..."
+          - pattern: "def $FUNCTION(..., $NAME: $TYPE, ...): ..."
+          - pattern: "async def $FUNCTION(..., $NAME, ...): ..."
+          - pattern: "async def $FUNCTION(..., $NAME: $TYPE, ...): ..."
+          - pattern: "pytest.mark.usefixtures(..., \"$NAME\", ...)"
+          - pattern: "$REQUEST.getfixturevalue(\"$NAME\")"
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '^(monkeypatch|(class_|module_|package_|session_)?mocker)$'
+    message: "testing policy: no mocks. The monkeypatch and mocker fixtures replace real code; test against real code and services."
+    severity: ERROR
+    languages: [python]
