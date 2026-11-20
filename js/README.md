@@ -65,13 +65,19 @@ export default [...pragmatiksConfig(), pragmatiksCssConfig()];
 
 ## `@pragmatiks/lint/eslint-config/unit-test`
 
-The unit-test config, one object for `tests/unit/**` that bans the vi mock, stub and fake-timer helpers (`vi.mock`, `vi.doMock`, `vi.spyOn`, `vi.fn`, `vi.stubGlobal`, `vi.stubEnv`, `vi.useFakeTimers`, `vi.setSystemTime`), `msw`, the Node I/O modules (`fs`, `fs/promises`, `child_process`, `net`, `http`, `https`, `http2`, `dgram`, `dns`, `tls`, `process`, `worker_threads`, bare and `node:`) and the globals `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and `process`, bare or through `globalThis`, `window` or `self`. Unit tests cover pure decisions with real inputs. It sets `no-restricted-properties`, `no-restricted-imports` and `no-restricted-globals` for those files, so place it last; it keeps the `/next` config's import and property bans, which a later config would otherwise replace:
+The unit-test config, one object for `tests/unit/**` that bans the vi mock, stub and fake-timer helpers (`vi.mock`, `vi.doMock`, `vi.spyOn`, `vi.fn`, `vi.stubGlobal`, `vi.stubEnv`, `vi.useFakeTimers`, `vi.setSystemTime`), `msw`, the Node I/O modules (`fs`, `fs/promises`, `child_process`, `net`, `http`, `https`, `http2`, `dgram`, `dns`, `tls`, `process`, `worker_threads`, bare and `node:`) and the globals `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and `process`, bare or through `globalThis`, `window` or `self`. Unit tests cover pure decisions with real inputs. It sets `no-restricted-properties`, `no-restricted-imports` and `no-restricted-globals` for those files, and bans `require()` and `import()` of those modules through `no-restricted-syntax`, so place it last. A later flat config replaces a rule's options, so a Next app uses `pragmatiksNextUnitTestConfig` from `@pragmatiks/lint/eslint-config/next` instead, which keeps the Next config's restricted imports, properties and syntax:
 
 ```ts
 import { pragmatiksConfig } from "@pragmatiks/lint";
 import { pragmatiksUnitTestConfig } from "@pragmatiks/lint/eslint-config/unit-test";
 
 export default [...pragmatiksConfig(), pragmatiksUnitTestConfig()];
+```
+
+```ts
+import { pragmatiksNextConfig, pragmatiksNextUnitTestConfig } from "@pragmatiks/lint/eslint-config/next";
+
+export default [...(await pragmatiksNextConfig(options)), pragmatiksNextUnitTestConfig()];
 ```
 
 ## `@pragmatiks/lint/eslint-config/next`
