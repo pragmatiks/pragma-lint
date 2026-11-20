@@ -1,5 +1,11 @@
 # Changelog
 
+## js-v0.11.0 (2026-11-20)
+
+### Features
+
+- **rules**: ban monkeypatch and mocker fixtures in tests (PRA-997)
+
 ## js-v0.10.1 (2026-11-08)
 
 ### Bug Fixes
