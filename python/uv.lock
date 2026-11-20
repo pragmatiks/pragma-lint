@@ -785,7 +785,7 @@ dev = [
 requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.0" },
     { name = "rich", marker = "extra == 'check'", specifier = ">=13.9.0" },
-    { name = "semgrep", marker = "extra == 'check'", specifier = ">=1.145.0" },
+    { name = "semgrep", marker = "extra == 'check'", specifier = ">=1.162.0" },
     { name = "typer", marker = "extra == 'check'", specifier = ">=0.15.3" },
 ]
 provides-extras = ["check"]

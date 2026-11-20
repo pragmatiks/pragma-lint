@@ -17,7 +17,7 @@ classifiers = [
 [project.optional-dependencies]
 check = [
     "rich>=13.9.0",
-    "semgrep>=1.145.0",
+    "semgrep>=1.162.0",
     "typer>=0.15.3",
 ]
 
